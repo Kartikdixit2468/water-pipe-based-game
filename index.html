@@ -35,7 +35,7 @@
         color: var(--text);
         display: flex;
         justify-content: center;
-        align-items: center; 
+        align-items: center;
         user-select: none;
       }
 
@@ -85,10 +85,12 @@
       #game-wrapper {
         position: relative;
         width: 100%;
-        height: 560px; 
-        background-color: #162032; 
-        box-shadow: inset 0 0 40px rgba(0, 0, 0, 0.6), 0 8px 24px rgba(0, 0, 0, 0.3);
-        border: 2px solid #334155; 
+        height: 560px;
+        background-color: #162032;
+        box-shadow:
+          inset 0 0 40px rgba(0, 0, 0, 0.6),
+          0 8px 24px rgba(0, 0, 0, 0.3);
+        border: 2px solid #334155;
         border-radius: 16px;
         overflow: hidden;
         margin: 5px 0;
@@ -278,7 +280,8 @@
 
       <div id="instructions">
         Drag pipes <span class="highlight">freely onto the wall</span>. Drag
-        placed pipes to move them. Click <span class="highlight">⇄</span> to reverse direction.
+        placed pipes to move them. Click <span class="highlight">⇄</span> to
+        reverse direction.
       </div>
     </div>
 
@@ -286,7 +289,10 @@
       // --- Universal App Scaling ---
       function resizeApp() {
         const app = document.getElementById("app-container");
-        const scale = Math.min(window.innerWidth / 1200, window.innerHeight / 800);
+        const scale = Math.min(
+          window.innerWidth / 1200,
+          window.innerHeight / 800,
+        );
         app.style.transform = `scale(${scale})`;
       }
       window.addEventListener("resize", resizeApp);
@@ -294,10 +300,10 @@
 
       // --- Fixed Canvas Logic Dimensions ---
       const LOGIC_W = 1200;
-      const LOGIC_H = 560; 
+      const LOGIC_H = 560;
       const canvas = document.getElementById("gameCanvas");
       const ctx = canvas.getContext("2d");
-      
+
       canvas.width = LOGIC_W * 2;
       canvas.height = LOGIC_H * 2;
       ctx.scale(2, 2);
@@ -305,48 +311,93 @@
       // --- Game Configuration ---
       const CFG = {
         units: 20,
-        unitW: 52,        
+        unitW: 52,
         waterSpeed: 350,
-        pipeRadius: 16,   
+        pipeRadius: 16,
         topRulerY: 70,
-        bottomRulerY: 490
+        bottomRulerY: 490,
       };
-      const offsetX = (LOGIC_W - (CFG.units * CFG.unitW)) / 2; // 80px
+      const offsetX = (LOGIC_W - CFG.units * CFG.unitW) / 2; // 80px
 
-      const LEVELS = [
-        {
-          id: 1,
-          start: 19,
-          target: 2,
-          blocks: [4, 1, 12, 2],
-          desc: "Build a path from right to left.",
-          maxRows: 4 
-        },
-        {
-          id: 2,
-          start: 7,
-          target: 13,
-          blocks: [7, 3, 9],
-          desc: "You may need to go backward first.",
-          maxRows: 3 
-        },
-        {
-          id: 3,
-          start: 20,
-          target: 2,
-          blocks: [16, 7, 17, 2, 9],
-          desc: "Some pipes are just distractions!",
-          maxRows: 4 
-        },
-      ];
+      // Dynamically generate an endless supply of levels!
+      function generateLevels(count) {
+        const generated = [];
+        for (let id = 1; id <= count; id++) {
+          let start, target, blocks, pathLen;
+          let isValid = false;
+
+          while (!isValid) {
+            start = Math.floor(Math.random() * 21);
+            // Increase path length to at least 4 pipes (4 to 6 pipes)
+            pathLen = Math.floor(Math.random() * 3) + 4;
+            let current = start;
+            blocks = [];
+            let failed = false;
+
+            // Generate a random path sequence
+            for (let i = 0; i < pathLen; i++) {
+              let validMoves = [];
+              // Restrict pipe lengths to a smaller range (2 to 9) to prevent huge impossible jumps
+              for (let len = 2; len <= 9; len++) {
+                if (current + len <= 20) validMoves.push({ len, dir: 1 });
+                if (current - len >= 0) validMoves.push({ len, dir: -1 });
+              }
+
+              if (validMoves.length === 0) {
+                failed = true;
+                break;
+              }
+
+              // Pick a random valid pipe for this step
+              let move =
+                validMoves[Math.floor(Math.random() * validMoves.length)];
+              blocks.push(move.len);
+              current += move.len * move.dir;
+            }
+
+            target = current;
+            // Ensure target is different from start and generation didn't fail
+            if (!failed && target !== start) {
+              isValid = true;
+            }
+          }
+
+          let desc =
+            id === 1
+              ? "Build a path from start to target."
+              : "Arrange the pipes to reach the target.";
+
+          // 40% chance to add a distraction block (also kept smaller)
+          if (Math.random() < 0.4) {
+            blocks.push(Math.floor(Math.random() * 8) + 2); // 2 to 9
+            desc = "Some pipes are just distractions!";
+          }
+
+          // Shuffle the tray blocks so the order isn't obvious
+          blocks.sort(() => Math.random() - 0.5);
+
+          generated.push({
+            id: id,
+            start: start,
+            target: target,
+            blocks: blocks,
+            desc: desc,
+            maxRows: pathLen,
+          });
+        }
+        return generated;
+      }
+
+      // Pre-generate 100 dynamic levels!
+      const LEVELS = generateLevels(100);
 
       // --- State ---
       let currentLvl = 0;
       let level = LEVELS[currentLvl];
-      let placedPipes = []; 
+      let placedPipes = [];
       let available = [];
-      let gameState = "build"; 
-      let stepH = 0; 
+      let gameState = "build";
+      let stepH = 0;
 
       let isValveOpen = false;
       let currentValveRotation = 0;
@@ -361,9 +412,11 @@
       let cameraY = 0;
 
       // Drag System
-      let mouseX = 0, mouseY = 0;
-      let activeDragPipe = null; 
-      let snapCol = 0, snapRow = 1;
+      let mouseX = 0,
+        mouseY = 0;
+      let activeDragPipe = null;
+      let snapCol = 0,
+        snapRow = 1;
 
       function getRowY(rowIdx) {
         if (rowIdx === 0) return CFG.topRulerY;
@@ -374,7 +427,11 @@
       function initLevel() {
         level = LEVELS[currentLvl];
         placedPipes = [];
-        available = level.blocks.map((b, i) => ({ val: b, id: `p_${currentLvl}_${i}`, dir: 1 }));
+        available = level.blocks.map((b, i) => ({
+          val: b,
+          id: `p_${currentLvl}_${i}`,
+          dir: 1,
+        }));
         gameState = "build";
 
         const totalDistance = CFG.bottomRulerY - CFG.topRulerY;
@@ -393,7 +450,8 @@
       }
 
       function updateUI() {
-        document.getElementById("level-desc").innerText = `Level ${currentLvl + 1}: ${level.desc}`;
+        document.getElementById("level-desc").innerText =
+          `Level ${currentLvl + 1}: ${level.desc}`;
         document.getElementById("equation-panel").innerText = level.start;
 
         const tray = document.getElementById("tray");
@@ -410,10 +468,13 @@
 
             el.addEventListener("dragstart", (e) => {
               const img = new Image();
-              img.src = "data:image/gif;base64,R0lGODlhAQABAAD/ACwAAAAAAQABAAACADs="; 
+              img.src =
+                "data:image/gif;base64,R0lGODlhAQABAAD/ACwAAAAAAQABAAACADs=";
               e.dataTransfer.setDragImage(img, 0, 0);
               activeDragPipe = { ...b };
-              setTimeout(() => { el.style.opacity = "0.2"; }, 0); 
+              setTimeout(() => {
+                el.style.opacity = "0.2";
+              }, 0);
             });
 
             el.addEventListener("dragend", () => {
@@ -431,45 +492,67 @@
       function buildFlowGraph() {
         let seq = [];
         let curCol = level.start;
-        let curRow = 0; 
+        let curRow = 0;
         let totDist = 0;
         let reachedTarget = false;
-        let finalX = 0, finalY = 0;
+        let finalX = 0,
+          finalY = 0;
 
         let currentX = offsetX + curCol * CFG.unitW;
-        let currentY = getRowY(0); 
-        seq.push({ type: 'start', x: currentX, y: currentY });
+        let currentY = getRowY(0);
+        seq.push({ type: "start", x: currentX, y: currentY });
 
         for (let r = 1; r <= level.maxRows + 1; r++) {
-          const nextPipe = placedPipes.find((p) => p.row === r && (p.col === curCol || p.col + (p.val * p.dir) === curCol));
-          
+          const nextPipe = placedPipes.find(
+            (p) =>
+              p.row === r &&
+              (p.col === curCol || p.col + p.val * p.dir === curCol),
+          );
+
           let dropY = getRowY(r);
           let px = offsetX + curCol * CFG.unitW;
 
           if (nextPipe) {
-            let exitCol = (nextPipe.col === curCol) ? (nextPipe.col + nextPipe.val * nextPipe.dir) : nextPipe.col;
+            let exitCol =
+              nextPipe.col === curCol
+                ? nextPipe.col + nextPipe.val * nextPipe.dir
+                : nextPipe.col;
             let targetX = offsetX + exitCol * CFG.unitW;
-            
+
             const pr = CFG.pipeRadius;
             const radius = Math.min(pr * 1.5, Math.abs(targetX - px) / 2);
             const flowDir = Math.sign(targetX - px);
 
-            let len1 = (dropY - radius) - currentY;
+            let len1 = dropY - radius - currentY;
             if (len1 > 0) totDist += len1;
             let arcLen = (Math.PI / 2) * radius;
             totDist += arcLen;
-            seq.push({ type: 'arcTo', x1: px, y1: dropY, x2: px + flowDir * radius, y2: dropY, radius: radius });
+            seq.push({
+              type: "arcTo",
+              x1: px,
+              y1: dropY,
+              x2: px + flowDir * radius,
+              y2: dropY,
+              radius: radius,
+            });
 
             let horizLen = Math.abs(targetX - px) - 2 * radius;
             if (horizLen > 0) totDist += horizLen;
             totDist += arcLen;
-            seq.push({ type: 'arcTo', x1: targetX, y1: dropY, x2: targetX, y2: dropY + radius, radius: radius });
+            seq.push({
+              type: "arcTo",
+              x1: targetX,
+              y1: dropY,
+              x2: targetX,
+              y2: dropY + radius,
+              radius: radius,
+            });
 
             let vertEndY = dropY + stepH / 2;
             let len2 = vertEndY - (dropY + radius);
             if (len2 > 0) {
-               totDist += len2;
-               seq.push({ type: 'line', x: targetX, y: vertEndY });
+              totDist += len2;
+              seq.push({ type: "line", x: targetX, y: vertEndY });
             }
 
             curCol = exitCol;
@@ -480,7 +563,7 @@
             finalY = vertEndY;
           } else {
             if (curCol === level.target) {
-              let targetDropY = getRowY(level.maxRows + 1); 
+              let targetDropY = getRowY(level.maxRows + 1);
               let dropLen = targetDropY - currentY;
               seq.push({ type: "line", x: px, y: targetDropY });
               totDist += dropLen;
@@ -494,7 +577,7 @@
               finalX = px;
               finalY = spillDropY;
             }
-            break; 
+            break;
           }
         }
 
@@ -507,12 +590,19 @@
         const scaleY = LOGIC_H / rect.height;
         return {
           x: (e.clientX - rect.left) * scaleX,
-          y: (e.clientY - rect.top) * scaleY
+          y: (e.clientY - rect.top) * scaleY,
         };
       }
 
-      canvas.addEventListener("dragover", (e) => { e.preventDefault(); updateMouseSnap(e); });
-      canvas.addEventListener("drop", (e) => { e.preventDefault(); updateMouseSnap(e); if (activeDragPipe) dropActivePipe(); });
+      canvas.addEventListener("dragover", (e) => {
+        e.preventDefault();
+        updateMouseSnap(e);
+      });
+      canvas.addEventListener("drop", (e) => {
+        e.preventDefault();
+        updateMouseSnap(e);
+        if (activeDragPipe) dropActivePipe();
+      });
 
       canvas.addEventListener("pointerdown", (e) => {
         if (gameState !== "build" || isTransitioning) return;
@@ -532,16 +622,32 @@
           let targetX = px + p.val * p.dir * CFG.unitW;
           let midX = (px + targetX) / 2;
 
-          if (Math.hypot(pos.x - midX, pos.y - (dropY - 32)) < CFG.unitW * 0.4) {
-            placedPipes[i].col = placedPipes[i].col + placedPipes[i].val * placedPipes[i].dir;
+          if (
+            Math.hypot(pos.x - midX, pos.y - (dropY - 32)) <
+            CFG.unitW * 0.4
+          ) {
+            placedPipes[i].col =
+              placedPipes[i].col + placedPipes[i].val * placedPipes[i].dir;
             placedPipes[i].dir *= -1;
             return;
           }
 
           let vertStartY = dropY - stepH / 2;
-          const inLeftVert = pos.x >= px - pr && pos.x <= px + pr && pos.y >= vertStartY && pos.y <= vertStartY + stepH;
-          const inRightVert = pos.x >= targetX - pr && pos.x <= targetX + pr && pos.y >= vertStartY && pos.y <= vertStartY + stepH;
-          const inHoriz = pos.x >= Math.min(px, targetX) - pr && pos.x <= Math.max(px, targetX) + pr && pos.y >= dropY - pr && pos.y <= dropY + pr;
+          const inLeftVert =
+            pos.x >= px - pr &&
+            pos.x <= px + pr &&
+            pos.y >= vertStartY &&
+            pos.y <= vertStartY + stepH;
+          const inRightVert =
+            pos.x >= targetX - pr &&
+            pos.x <= targetX + pr &&
+            pos.y >= vertStartY &&
+            pos.y <= vertStartY + stepH;
+          const inHoriz =
+            pos.x >= Math.min(px, targetX) - pr &&
+            pos.x <= Math.max(px, targetX) + pr &&
+            pos.y >= dropY - pr &&
+            pos.y <= dropY + pr;
 
           if (inLeftVert || inRightVert || inHoriz) {
             activeDragPipe = placedPipes.splice(i, 1)[0];
@@ -556,17 +662,22 @@
         updateMouseSnap(e);
         const pos = getMousePos(e);
         let cursor = "default";
-        
+
         const valveX = offsetX + level.start * CFG.unitW;
-        if (Math.hypot(pos.x - valveX, pos.y - getRowY(0)) < CFG.unitW * 0.8) cursor = "pointer";
+        if (Math.hypot(pos.x - valveX, pos.y - getRowY(0)) < CFG.unitW * 0.8)
+          cursor = "pointer";
 
         placedPipes.forEach((p) => {
           let px = offsetX + p.col * CFG.unitW;
           let dropY = getRowY(p.row);
           let targetX = px + p.val * p.dir * CFG.unitW;
-          if (Math.hypot(pos.x - (px + targetX) / 2, pos.y - (dropY - 32)) < CFG.unitW * 0.4) cursor = "pointer";
+          if (
+            Math.hypot(pos.x - (px + targetX) / 2, pos.y - (dropY - 32)) <
+            CFG.unitW * 0.4
+          )
+            cursor = "pointer";
         });
-        
+
         if (activeDragPipe) cursor = "grabbing";
         canvas.style.cursor = cursor;
       });
@@ -578,28 +689,34 @@
       function updateMouseSnap(e) {
         if (!activeDragPipe) return;
         const pos = getMousePos(e);
-        
-        snapRow = Math.max(1, Math.min(level.maxRows, Math.round((pos.y - CFG.topRulerY) / stepH)));
+
+        snapRow = Math.max(
+          1,
+          Math.min(level.maxRows, Math.round((pos.y - CFG.topRulerY) / stepH)),
+        );
         snapCol = Math.round((pos.x - offsetX) / CFG.unitW);
         snapCol = Math.max(0, Math.min(CFG.units, snapCol));
 
         let val = activeDragPipe.val;
 
-        if (snapCol + val * activeDragPipe.dir > CFG.units) activeDragPipe.dir = -1;
+        if (snapCol + val * activeDragPipe.dir > CFG.units)
+          activeDragPipe.dir = -1;
         if (snapCol + val * activeDragPipe.dir < 0) activeDragPipe.dir = 1;
 
         let dir = activeDragPipe.dir;
         let leftCol = Math.min(snapCol, snapCol + val * dir);
-        if (leftCol < 0) snapCol += (0 - leftCol);
-        if (Math.max(snapCol, snapCol + val * dir) > CFG.units) snapCol -= (Math.max(snapCol, snapCol + val * dir) - CFG.units);
-        
+        if (leftCol < 0) snapCol += 0 - leftCol;
+        if (Math.max(snapCol, snapCol + val * dir) > CFG.units)
+          snapCol -= Math.max(snapCol, snapCol + val * dir) - CFG.units;
+
         mouseX = pos.x;
         mouseY = pos.y;
       }
 
       function dropActivePipe() {
         if (mouseY > LOGIC_H - 80) {
-          if (!available.find((p) => p.id === activeDragPipe.id)) available.push(activeDragPipe);
+          if (!available.find((p) => p.id === activeDragPipe.id))
+            available.push(activeDragPipe);
         } else {
           placedPipes.push({ ...activeDragPipe, col: snapCol, row: snapRow });
           available = available.filter((p) => p.id !== activeDragPipe.id);
@@ -634,20 +751,24 @@
       // --- Transition Logic Trigger ---
       document.getElementById("btn-next").addEventListener("click", () => {
         document.getElementById("overlay-win").classList.remove("active");
-        
+
         // Set Transition state
         gameState = "transition";
         isTransitioning = true;
-        
+
         // Update header text immediately for smoothness
         const nextIdx = (currentLvl + 1) % LEVELS.length;
-        document.getElementById("level-desc").innerText = `Level ${nextIdx + 1}: ${LEVELS[nextIdx].desc}`;
-        document.getElementById("equation-panel").innerText = LEVELS[nextIdx].start;
+        document.getElementById("level-desc").innerText =
+          `Level ${nextIdx + 1}: ${LEVELS[nextIdx].desc}`;
+        document.getElementById("equation-panel").innerText =
+          LEVELS[nextIdx].start;
         document.getElementById("tray").innerHTML = "";
       });
 
       document.getElementById("btn-reset").addEventListener("click", initLevel);
-      document.getElementById("btn-retry").addEventListener("click", closeValve);
+      document
+        .getElementById("btn-retry")
+        .addEventListener("click", closeValve);
 
       // --- Drawing Utilities ---
       function roundRect(x, y, w, h, r) {
@@ -660,7 +781,12 @@
         if (w <= 0 || h <= 0) return;
         ctx.fillStyle = "rgba(0,0,0,0.4)";
         roundRect(x + 2, y + 2, w, h, 4);
-        const grad = ctx.createLinearGradient(x, y, isVertical ? x : x + w, isVertical ? y + h : y);
+        const grad = ctx.createLinearGradient(
+          x,
+          y,
+          isVertical ? x : x + w,
+          isVertical ? y + h : y,
+        );
         grad.addColorStop(0, "#64748b");
         grad.addColorStop(0.3, "#cbd5e1");
         grad.addColorStop(0.7, "#94a3b8");
@@ -668,22 +794,42 @@
         ctx.fillStyle = grad;
         roundRect(x, y, w, h, 4);
         ctx.fillStyle = "#0f172a";
-        
+
         const innerGap = Math.max(2, CFG.pipeRadius * 0.4);
-        if (!isVertical) ctx.fillRect(x + innerGap, y + innerGap*1.2, w - innerGap*2, h - innerGap*2.4);
-        else ctx.fillRect(x + innerGap*1.2, y + innerGap, w - innerGap*2.4, h - innerGap*2);
+        if (!isVertical)
+          ctx.fillRect(
+            x + innerGap,
+            y + innerGap * 1.2,
+            w - innerGap * 2,
+            h - innerGap * 2.4,
+          );
+        else
+          ctx.fillRect(
+            x + innerGap * 1.2,
+            y + innerGap,
+            w - innerGap * 2.4,
+            h - innerGap * 2,
+          );
       }
 
-      function drawSeamlessPipeStructure(col, row, val, dir, isFaded, localStepH, getLocalRowY) {
+      function drawSeamlessPipeStructure(
+        col,
+        row,
+        val,
+        dir,
+        isFaded,
+        localStepH,
+        getLocalRowY,
+      ) {
         const pr = CFG.pipeRadius;
-        let px = offsetX + col * CFG.unitW; 
-        let dropY = getLocalRowY(row);           
-        let targetX = px + val * dir * CFG.unitW; 
-        
+        let px = offsetX + col * CFG.unitW;
+        let dropY = getLocalRowY(row);
+        let targetX = px + val * dir * CFG.unitW;
+
         ctx.globalAlpha = isFaded ? 0.4 : 1.0;
 
-        let vertStartY = dropY - localStepH / 2; 
-        let vertEndY = dropY + localStepH / 2;   
+        let vertStartY = dropY - localStepH / 2;
+        let vertEndY = dropY + localStepH / 2;
 
         const radius = Math.min(pr * 1.5, Math.abs(targetX - px) / 2);
         const flowDir = Math.sign(targetX - px);
@@ -711,10 +857,10 @@
         ctx.stroke();
         ctx.restore();
 
-        // Entry Flange 
+        // Entry Flange
         ctx.fillStyle = "#475569";
         roundRect(px - pr - 4, vertStartY, pr * 2 + 8, 8, 2);
-        // Exit Flange 
+        // Exit Flange
         roundRect(targetX - pr - 4, vertEndY - 8, pr * 2 + 8, 8, 2);
 
         // Value text (Moved to bottom)
@@ -739,11 +885,12 @@
       }
 
       function drawLevelContent(lvl, pipesArr, fDist, pSegments, parts, vRot) {
-        const localStepH = (CFG.bottomRulerY - CFG.topRulerY) / (lvl.maxRows + 1);
+        const localStepH =
+          (CFG.bottomRulerY - CFG.topRulerY) / (lvl.maxRows + 1);
         const getLocalRowY = (rowIdx) => {
-            if (rowIdx === 0) return CFG.topRulerY;
-            if (rowIdx === lvl.maxRows + 1) return CFG.bottomRulerY;
-            return CFG.topRulerY + rowIdx * localStepH;
+          if (rowIdx === 0) return CFG.topRulerY;
+          if (rowIdx === lvl.maxRows + 1) return CFG.bottomRulerY;
+          return CFG.topRulerY + rowIdx * localStepH;
         };
 
         const pipeWidth = CFG.units * CFG.unitW + CFG.unitW * 2;
@@ -752,32 +899,62 @@
 
         // TOP RULER PIPE
         const topPipeY = getLocalRowY(0);
-        drawSegment(pipeStartX, topPipeY - rulerHeight / 2, pipeWidth, rulerHeight, false);
-        
+        drawSegment(
+          pipeStartX,
+          topPipeY - rulerHeight / 2,
+          pipeWidth,
+          rulerHeight,
+          false,
+        );
+
         const startPx = offsetX + lvl.start * CFG.unitW;
-        drawSegment(startPx - CFG.pipeRadius, topPipeY, CFG.pipeRadius * 2, localStepH / 2, true);
+        drawSegment(
+          startPx - CFG.pipeRadius,
+          topPipeY,
+          CFG.pipeRadius * 2,
+          localStepH / 2,
+          true,
+        );
         ctx.fillStyle = "#475569";
-        roundRect(startPx - CFG.pipeRadius - 4, topPipeY + localStepH / 2 - 8, CFG.pipeRadius * 2 + 8, 8, 2); 
-        
+        roundRect(
+          startPx - CFG.pipeRadius - 4,
+          topPipeY + localStepH / 2 - 8,
+          CFG.pipeRadius * 2 + 8,
+          8,
+          2,
+        );
+
         ctx.textAlign = "center";
         ctx.textBaseline = "middle";
         for (let i = 0; i <= CFG.units; i++) {
           let px = offsetX + i * CFG.unitW;
           ctx.fillStyle = "#94a3b8";
-          ctx.fillRect(px - 1, topPipeY + rulerHeight / 2 - 8, 2, 8); 
+          ctx.fillRect(px - 1, topPipeY + rulerHeight / 2 - 8, 2, 8);
           ctx.fillStyle = "white";
-          ctx.font = `900 18px Nunito`; 
+          ctx.font = `900 18px Nunito`;
           ctx.fillText(i, px, topPipeY - 2);
         }
 
         // BOTTOM RULER PIPE
         const bottomPipeY = getLocalRowY(lvl.maxRows + 1);
-        drawSegment(pipeStartX, bottomPipeY - rulerHeight / 2, pipeWidth, rulerHeight, false);
+        drawSegment(
+          pipeStartX,
+          bottomPipeY - rulerHeight / 2,
+          pipeWidth,
+          rulerHeight,
+          false,
+        );
 
         const targetPx = offsetX + lvl.target * CFG.unitW;
         const targetTopY = bottomPipeY - localStepH / 2;
-        drawSegment(targetPx - CFG.pipeRadius, targetTopY, CFG.pipeRadius * 2, localStepH / 2, true);
-        
+        drawSegment(
+          targetPx - CFG.pipeRadius,
+          targetTopY,
+          CFG.pipeRadius * 2,
+          localStepH / 2,
+          true,
+        );
+
         ctx.fillStyle = "#f59e0b";
         ctx.beginPath();
         ctx.roundRect(targetPx - 20, targetTopY, 40, 8, 4);
@@ -790,9 +967,9 @@
         for (let i = 0; i <= CFG.units; i++) {
           let px = offsetX + i * CFG.unitW;
           ctx.fillStyle = "#94a3b8";
-          ctx.fillRect(px - 1, bottomPipeY - rulerHeight / 2, 2, 8); 
-          ctx.fillStyle = i === lvl.target ? "#fcd34d" : "white"; 
-          ctx.font = `900 18px Nunito`; 
+          ctx.fillRect(px - 1, bottomPipeY - rulerHeight / 2, 2, 8);
+          ctx.fillStyle = i === lvl.target ? "#fcd34d" : "white";
+          ctx.font = `900 18px Nunito`;
           ctx.fillText(i, px, bottomPipeY + 4);
         }
 
@@ -809,43 +986,66 @@
 
         // Draw Pipes
         pipesArr.forEach((p) => {
-          drawSeamlessPipeStructure(p.col, p.row, p.val, p.dir, false, localStepH, getLocalRowY);
+          drawSeamlessPipeStructure(
+            p.col,
+            p.row,
+            p.val,
+            p.dir,
+            false,
+            localStepH,
+            getLocalRowY,
+          );
         });
 
         // Draw Drag Ghost (Only if it's the active level)
         if (activeDragPipe && lvl === level) {
-          drawSeamlessPipeStructure(snapCol, snapRow, activeDragPipe.val, activeDragPipe.dir, true, localStepH, getLocalRowY);
+          drawSeamlessPipeStructure(
+            snapCol,
+            snapRow,
+            activeDragPipe.val,
+            activeDragPipe.dir,
+            true,
+            localStepH,
+            getLocalRowY,
+          );
         }
 
         // Draw Water
         if (fDist > 0) {
-            ctx.beginPath();
-            pSegments.forEach((seg) => {
-              if (seg.type === "start") ctx.moveTo(seg.x, seg.y);
-              else if (seg.type === "line") ctx.lineTo(seg.x, seg.y);
-              else if (seg.type === "arcTo") ctx.arcTo(seg.x1, seg.y1, seg.x2, seg.y2, seg.radius);
-            });
+          ctx.beginPath();
+          pSegments.forEach((seg) => {
+            if (seg.type === "start") ctx.moveTo(seg.x, seg.y);
+            else if (seg.type === "line") ctx.lineTo(seg.x, seg.y);
+            else if (seg.type === "arcTo")
+              ctx.arcTo(seg.x1, seg.y1, seg.x2, seg.y2, seg.radius);
+          });
 
-            ctx.setLineDash([fDist, 999999]);
-            ctx.lineDashOffset = 0;
+          ctx.setLineDash([fDist, 999999]);
+          ctx.lineDashOffset = 0;
 
-            ctx.lineWidth = CFG.pipeRadius * 1.2;
-            ctx.strokeStyle = "#0ea5e9";
-            ctx.lineCap = "round";
-            ctx.lineJoin = "round";
-            ctx.stroke();
+          ctx.lineWidth = CFG.pipeRadius * 1.2;
+          ctx.strokeStyle = "#0ea5e9";
+          ctx.lineCap = "round";
+          ctx.lineJoin = "round";
+          ctx.stroke();
 
-            ctx.lineWidth = CFG.pipeRadius * 0.6;
-            ctx.strokeStyle = "#7dd3fc";
-            ctx.stroke();
-            ctx.setLineDash([]); 
+          ctx.lineWidth = CFG.pipeRadius * 0.6;
+          ctx.strokeStyle = "#7dd3fc";
+          ctx.stroke();
+          ctx.setLineDash([]);
         }
 
         // Draw Particles
         parts.forEach((p) => {
           ctx.fillStyle = `rgba(14, 165, 233, ${p.life})`;
           ctx.beginPath();
-          ctx.arc(p.x, p.y, Math.max(2, CFG.unitW * 0.1) + Math.random() * 2, 0, Math.PI * 2);
+          ctx.arc(
+            p.x,
+            p.y,
+            Math.max(2, CFG.unitW * 0.1) + Math.random() * 2,
+            0,
+            Math.PI * 2,
+          );
           ctx.fill();
         });
 
@@ -855,15 +1055,27 @@
         ctx.translate(startPx, topPipeY);
         ctx.rotate(vRot);
         ctx.fillStyle = "#ef4444";
-        ctx.beginPath(); ctx.arc(0, 0, wheelSize, 0, Math.PI * 2); ctx.fill();
+        ctx.beginPath();
+        ctx.arc(0, 0, wheelSize, 0, Math.PI * 2);
+        ctx.fill();
         ctx.fillStyle = "#0f172a";
-        ctx.beginPath(); ctx.arc(0, 0, wheelSize * 0.6, 0, Math.PI * 2); ctx.fill();
+        ctx.beginPath();
+        ctx.arc(0, 0, wheelSize * 0.6, 0, Math.PI * 2);
+        ctx.fill();
         ctx.strokeStyle = "#ef4444";
         ctx.lineWidth = wheelSize * 0.2;
-        ctx.beginPath(); ctx.moveTo(-wheelSize, 0); ctx.lineTo(wheelSize, 0); ctx.stroke();
-        ctx.beginPath(); ctx.moveTo(0, -wheelSize); ctx.lineTo(0, wheelSize); ctx.stroke();
+        ctx.beginPath();
+        ctx.moveTo(-wheelSize, 0);
+        ctx.lineTo(wheelSize, 0);
+        ctx.stroke();
+        ctx.beginPath();
+        ctx.moveTo(0, -wheelSize);
+        ctx.lineTo(0, wheelSize);
+        ctx.stroke();
         ctx.fillStyle = "#7f1d1d";
-        ctx.beginPath(); ctx.arc(0, 0, wheelSize * 0.25, 0, Math.PI * 2); ctx.fill();
+        ctx.beginPath();
+        ctx.arc(0, 0, wheelSize * 0.25, 0, Math.PI * 2);
+        ctx.fill();
         ctx.restore();
       }
 
@@ -871,18 +1083,19 @@
       let lastTime = performance.now();
 
       function updatePhysics(dt) {
-        currentValveRotation += (targetValveRotation - currentValveRotation) * 8 * dt;
+        currentValveRotation +=
+          (targetValveRotation - currentValveRotation) * 8 * dt;
 
         // Transition Animation Logic
         if (isTransitioning) {
-            cameraY -= 1200 * dt; // Scroll speed
-            if (cameraY <= -LOGIC_H) {
-                cameraY = 0;
-                isTransitioning = false;
-                currentLvl = (currentLvl + 1) % LEVELS.length;
-                initLevel();
-            }
-            return; // Pause fluid physics while scrolling
+          cameraY -= 1200 * dt; // Scroll speed
+          if (cameraY <= -LOGIC_H) {
+            cameraY = 0;
+            isTransitioning = false;
+            currentLvl = (currentLvl + 1) % LEVELS.length;
+            initLevel();
+          }
+          return; // Pause fluid physics while scrolling
         }
 
         if (gameState === "flow") {
@@ -908,7 +1121,8 @@
               life: 1.0,
             });
           }
-          if (particles.length > 150) document.getElementById("overlay-lose").classList.add("active");
+          if (particles.length > 150)
+            document.getElementById("overlay-lose").classList.add("active");
         }
 
         for (let i = particles.length - 1; i >= 0; i--) {
@@ -923,19 +1137,26 @@
 
       function render() {
         ctx.clearRect(0, 0, LOGIC_W, LOGIC_H);
-        
+
         ctx.save();
         ctx.translate(0, cameraY);
 
         // Render Current Level
-        drawLevelContent(level, placedPipes, flowDist, pathSegments, particles, currentValveRotation);
+        drawLevelContent(
+          level,
+          placedPipes,
+          flowDist,
+          pathSegments,
+          particles,
+          currentValveRotation,
+        );
 
         // Render Next Level (spawning in from below during transition scroll)
         if (isTransitioning) {
-            ctx.translate(0, LOGIC_H);
-            let nextLvl = LEVELS[(currentLvl + 1) % LEVELS.length];
-            // Next level has no water, particles, or placed pipes yet
-            drawLevelContent(nextLvl, [], 0, [], [], 0);
+          ctx.translate(0, LOGIC_H);
+          let nextLvl = LEVELS[(currentLvl + 1) % LEVELS.length];
+          // Next level has no water, particles, or placed pipes yet
+          drawLevelContent(nextLvl, [], 0, [], [], 0);
         }
 
         ctx.restore();
