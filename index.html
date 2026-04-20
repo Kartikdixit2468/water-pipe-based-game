@@ -532,7 +532,7 @@
           let targetX = px + p.val * p.dir * CFG.unitW;
           let midX = (px + targetX) / 2;
 
-          if (Math.hypot(pos.x - midX, pos.y - (dropY + CFG.unitW * 0.35)) < CFG.unitW * 0.5) {
+          if (Math.hypot(pos.x - midX, pos.y - (dropY - 32)) < CFG.unitW * 0.4) {
             placedPipes[i].col = placedPipes[i].col + placedPipes[i].val * placedPipes[i].dir;
             placedPipes[i].dir *= -1;
             return;
@@ -564,7 +564,7 @@
           let px = offsetX + p.col * CFG.unitW;
           let dropY = getRowY(p.row);
           let targetX = px + p.val * p.dir * CFG.unitW;
-          if (Math.hypot(pos.x - (px + targetX) / 2, pos.y - (dropY + CFG.unitW * 0.35)) < CFG.unitW * 0.5) cursor = "pointer";
+          if (Math.hypot(pos.x - (px + targetX) / 2, pos.y - (dropY - 32)) < CFG.unitW * 0.4) cursor = "pointer";
         });
         
         if (activeDragPipe) cursor = "grabbing";
@@ -711,20 +711,24 @@
         ctx.stroke();
         ctx.restore();
 
+        // Entry Flange 
         ctx.fillStyle = "#475569";
         roundRect(px - pr - 4, vertStartY, pr * 2 + 8, 8, 2);
+        // Exit Flange 
         roundRect(targetX - pr - 4, vertEndY - 8, pr * 2 + 8, 8, 2);
 
+        // Value text (Moved to bottom)
         const midX = (px + targetX) / 2;
         ctx.fillStyle = "white";
         ctx.font = `900 20px Nunito`;
         ctx.textAlign = "center";
         ctx.textBaseline = "middle";
-        ctx.fillText(val, midX, dropY - 22);
+        ctx.fillText(val, midX, dropY + 38);
 
+        // Reverse Button (Moved to top)
         const btnW = 32;
         const btnH = 20;
-        const btnY = dropY + 12;
+        const btnY = dropY - 32;
         ctx.fillStyle = "#475569";
         roundRect(midX - btnW / 2, btnY, btnW, btnH, btnH / 2);
         ctx.fillStyle = "white";
@@ -791,6 +795,17 @@
           ctx.font = `900 18px Nunito`; 
           ctx.fillText(i, px, bottomPipeY + 4);
         }
+
+        // Watermark Help Text
+        ctx.save();
+        ctx.textAlign = "center";
+        ctx.textBaseline = "middle";
+        ctx.fillStyle = "rgba(255, 255, 255, 0.04)";
+        ctx.font = "900 56px Nunito";
+        const centerY = (CFG.topRulerY + CFG.bottomRulerY) / 2;
+        ctx.fillText("ARRANGE PIPE NETWORK", LOGIC_W / 2, centerY - 30);
+        ctx.fillText("TO DRAIN WATER", LOGIC_W / 2, centerY + 30);
+        ctx.restore();
 
         // Draw Pipes
         pipesArr.forEach((p) => {
