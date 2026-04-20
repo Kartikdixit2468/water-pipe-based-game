@@ -283,11 +283,11 @@
       // --- Configuration ---
       const CFG = {
         units: 20,
-        unitW: 52, // Scaled dynamically in resizeCanvas
-        stepH: 52, // Equal to unitW for perfect "2 block" pipe dropping
-        maxRows: 6, // Playable rows
+        unitW: 52,
+        stepH: 72, // 1.4x unitW for taller turns
+        maxRows: 6,
         waterSpeed: 350,
-        pipeRadius: 14,
+        pipeRadius: 16,
       };
 
       const LEVELS = [
@@ -317,9 +317,9 @@
       // --- State ---
       let currentLvl = 0;
       let level = LEVELS[currentLvl];
-      let placedPipes = []; // {id, val, dir, col, row}
+      let placedPipes = [];
       let available = [];
-      let gameState = "build"; // build, flow, spill, win
+      let gameState = "build";
 
       let isValveOpen = false;
       let currentValveRotation = 0;
@@ -348,25 +348,21 @@
         canvas.height = rect.height * 2;
         ctx.scale(2, 2);
 
-        // Dynamically compute max allowed sizes to guarantee the bottom bar is ALWAYS visible
+        // Dynamically compute sizes to keep UI strictly inside screen
         const maxAllowedW = (LOGIC_W - 60) / CFG.units;
-        const maxAllowedH = (LOGIC_H - 40) / (CFG.maxRows + 1.5);
+        const maxAllowedH = (LOGIC_H - 40) / ((CFG.maxRows + 1) * 1.4 + 0.8);
         CFG.unitW = Math.min(52, maxAllowedW, maxAllowedH);
-        CFG.stepH = CFG.unitW; // Make it exactly 1 square drop
+        CFG.stepH = CFG.unitW * 1.4; // Taller vertical drops
 
-        // INCREASED pipe thickness, proportioned better
-        CFG.pipeRadius = Math.max(10, CFG.unitW * 0.3);
+        // Thicker pipe body for robust look
+        CFG.pipeRadius = Math.max(12, CFG.unitW * 0.35);
 
-        // Center Horizontally
         offsetX = Math.max(30, (LOGIC_W - CFG.units * CFG.unitW) / 2);
-
-        // Center Vertically
         const gameHeight = (CFG.maxRows + 1) * CFG.stepH;
         offsetY = Math.max(20, (LOGIC_H - gameHeight) / 2);
       }
       window.addEventListener("resize", resizeCanvas);
 
-      // Calculates exact Y position for rows
       function getRowY(rowIdx) {
         return offsetY + rowIdx * CFG.stepH;
       }
@@ -443,7 +439,10 @@
         let finalX = 0;
         let finalY = 0;
 
-        // Loop including maxRows + 1 to check for goal drop success
+        let currentX = offsetX + curCol * CFG.unitW;
+        let currentY = getRowY(0);
+        seq.push({ type: "start", x: currentX, y: currentY });
+
         for (let r = 1; r <= CFG.maxRows + 1; r++) {
           // BIDIRECTIONAL ENTRY LOGIC: Water can enter either side of the pipe!
           const nextPipe = placedPipes.find(
@@ -452,7 +451,6 @@
               (p.col === curCol || p.col + p.val * p.dir === curCol),
           );
 
-          let startY = getRowY(curRow);
           let dropY = getRowY(r);
           let px = offsetX + curCol * CFG.unitW;
 
@@ -462,60 +460,67 @@
               nextPipe.col === curCol
                 ? nextPipe.col + nextPipe.val * nextPipe.dir
                 : nextPipe.col;
-
-            seq.push({
-              type: "v",
-              x: px,
-              y1: startY,
-              y2: dropY,
-              len: dropY - startY,
-            });
-            totDist += dropY - startY;
-
             let targetX = offsetX + exitCol * CFG.unitW;
-            let hLen = Math.abs(targetX - px);
-            let flowDir = targetX > px ? 1 : -1;
+
+            const pr = CFG.pipeRadius;
+            const radius = Math.min(pr * 1.5, Math.abs(targetX - px) / 2);
+            const flowDir = Math.sign(targetX - px);
+
+            // Water comes from currentY down to the start of the first arc (dropY - radius)
+            let len1 = dropY - radius - currentY;
+            if (len1 > 0) totDist += len1;
+            let arcLen = (Math.PI / 2) * radius;
+            totDist += arcLen;
             seq.push({
-              type: "h",
-              y: dropY,
+              type: "arcTo",
               x1: px,
-              x2: targetX,
-              dir: flowDir,
-              len: hLen,
+              y1: dropY,
+              x2: px + flowDir * radius,
+              y2: dropY,
+              radius: radius,
             });
-            totDist += hLen;
+
+            // Distance added by the second arcTo (line + arc)
+            let horizLen = Math.abs(targetX - px) - 2 * radius;
+            if (horizLen > 0) totDist += horizLen;
+            totDist += arcLen;
+            seq.push({
+              type: "arcTo",
+              x1: targetX,
+              y1: dropY,
+              x2: targetX,
+              y2: dropY + radius,
+              radius: radius,
+            });
+
+            // Distance added by the final exit stub
+            let vertEndY = dropY + CFG.stepH / 2;
+            let len2 = vertEndY - (dropY + radius);
+            if (len2 > 0) {
+              totDist += len2;
+              seq.push({ type: "line", x: targetX, y: vertEndY });
+            }
 
             curCol = exitCol; // Move to pipe's exit
             curRow = r;
+            currentX = targetX;
+            currentY = vertEndY;
             finalX = targetX;
-            finalY = dropY;
+            finalY = vertEndY;
           } else {
             // Flexible Victory check: If we reach the target column and there's no pipe below, it drops to the goal
             if (curCol === level.target) {
-              let targetDropY =
-                getRowY(CFG.maxRows + 1) - (CFG.unitW * 0.8) / 2; // Hits flange
-              let dropLen = targetDropY - startY;
-              seq.push({
-                type: "v",
-                x: px,
-                y1: startY,
-                y2: targetDropY,
-                len: dropLen,
-              });
+              let targetDropY = getRowY(CFG.maxRows + 1) - CFG.stepH / 2;
+              let dropLen = targetDropY - currentY;
+              seq.push({ type: "line", x: px, y: targetDropY });
               totDist += dropLen;
               finalX = px;
               finalY = targetDropY;
               reachedTarget = true;
             } else {
               // Standard Spill
-              let spillDropY = startY + CFG.stepH;
-              seq.push({
-                type: "v",
-                x: px,
-                y1: startY,
-                y2: spillDropY,
-                len: CFG.stepH,
-              });
+              let spillDropY = currentY + CFG.stepH;
+              seq.push({ type: "line", x: px, y: spillDropY });
               totDist += CFG.stepH;
               finalX = px;
               finalY = spillDropY;
@@ -556,28 +561,41 @@
         for (let i = placedPipes.length - 1; i >= 0; i--) {
           const p = placedPipes[i];
           let px = offsetX + p.col * CFG.unitW;
-          let py = getRowY(p.row - 1);
           let dropY = getRowY(p.row);
           let targetX = px + p.val * p.dir * CFG.unitW;
           let midX = (px + targetX) / 2;
 
+          // REVERSE BUTTON LOGIC: Perfectly flips entry and exit without shifting layout
           if (
             Math.hypot(mx - midX, my - (dropY + CFG.unitW * 0.35)) <
             CFG.unitW * 0.4
           ) {
+            placedPipes[i].col =
+              placedPipes[i].col + placedPipes[i].val * placedPipes[i].dir;
             placedPipes[i].dir *= -1;
             return;
           }
 
-          const inVert =
-            mx >= px - pr && mx <= px + pr && my >= py && my <= dropY;
+          let vertStartY = dropY - CFG.stepH / 2;
+          let vertH = CFG.stepH;
+
+          const inLeftVert =
+            mx >= px - pr &&
+            mx <= px + pr &&
+            my >= vertStartY &&
+            my <= vertStartY + vertH;
+          const inRightVert =
+            mx >= targetX - pr &&
+            mx <= targetX + pr &&
+            my >= vertStartY &&
+            my <= vertStartY + vertH;
           const inHoriz =
             mx >= Math.min(px, targetX) - pr &&
             mx <= Math.max(px, targetX) + pr &&
             my >= dropY - pr &&
             my <= dropY + pr;
 
-          if (inVert || inHoriz) {
+          if (inLeftVert || inRightVert || inHoriz) {
             activeDragPipe = placedPipes.splice(i, 1)[0];
             updateMouseSnap(e);
             return;
@@ -629,19 +647,15 @@
         mouseY = e.clientY - rect.top;
 
         if (activeDragPipe) {
-          // Snap row based on vertical position
           snapRow = Math.max(
             1,
             Math.min(CFG.maxRows, Math.round((mouseY - offsetY) / CFG.stepH)),
           );
           snapCol = Math.round((mouseX - offsetX) / CFG.unitW);
-
-          // Constrain Entry point to board
           snapCol = Math.max(0, Math.min(CFG.units, snapCol));
 
           let val = activeDragPipe.val;
 
-          // AUTO-FLIP: Automatically aim the pipe back onto the board if it exceeds bounds
           if (snapCol + val * activeDragPipe.dir > CFG.units) {
             activeDragPipe.dir = -1;
           }
@@ -650,18 +664,12 @@
           }
 
           let dir = activeDragPipe.dir;
-
           let leftCol = Math.min(snapCol, snapCol + val * dir);
           let rightCol = Math.max(snapCol, snapCol + val * dir);
 
-          // Force pipes to stay strictly inside the 0 to 20 grid boundary (Fallback Shift)
-          if (leftCol < 0) {
-            snapCol += 0 - leftCol;
-          }
+          if (leftCol < 0) snapCol += 0 - leftCol;
           rightCol = Math.max(snapCol, snapCol + val * dir);
-          if (rightCol > CFG.units) {
-            snapCol -= rightCol - CFG.units;
-          }
+          if (rightCol > CFG.units) snapCol -= rightCol - CFG.units;
         }
       }
 
@@ -724,45 +732,56 @@
         ctx.fill();
       }
 
-      function drawPipeStructure(col, row, val, dir, isFaded = false) {
+      function drawSeamlessPipeStructure(col, row, val, dir, isFaded = false) {
         const pr = CFG.pipeRadius;
-        let px = offsetX + col * CFG.unitW;
-        let dropY = getRowY(row);
-        let targetX = px + val * dir * CFG.unitW;
-        let minX = Math.min(px, targetX);
-        let w = Math.abs(targetX - px) + pr * 2;
+        let px = offsetX + col * CFG.unitW; // Entry X
+        let dropY = getRowY(row); // Horizontal Level Y
+        let targetX = px + val * dir * CFG.unitW; // Exit X
 
         ctx.globalAlpha = isFaded ? 0.4 : 1.0;
 
-        // Horizontal body
-        drawSegment(minX - pr, dropY - pr, w, pr * 2, false);
+        let vertStartY = dropY - CFG.stepH / 2; // Entry stub going UP
+        let vertEndY = dropY + CFG.stepH / 2; // Exit stub going DOWN
 
-        // Draw main joints
-        drawJoint(px, dropY);
-        drawJoint(targetX, dropY);
+        // Corner Radius logic
+        const radius = Math.min(pr * 1.5, Math.abs(targetX - px) / 2);
+        const flowDir = Math.sign(targetX - px);
 
-        // Bidirectional Entry/Exit Stubs & Flanges
-        const stubH = CFG.unitW * 0.15;
+        ctx.save();
+        ctx.beginPath();
+        ctx.moveTo(px, vertStartY);
+        ctx.arcTo(px, dropY, px + flowDir * radius, dropY, radius);
+        ctx.arcTo(targetX, dropY, targetX, dropY + radius, radius);
+        ctx.lineTo(targetX, vertEndY);
 
-        // Anchor End (Top and Bottom Stubs)
-        drawSegment(px - pr, dropY - pr - stubH, pr * 2, stubH, true);
+        ctx.lineCap = "butt";
+        ctx.lineJoin = "round";
+
+        // Deep Border
+        ctx.lineWidth = pr * 2.4;
+        ctx.strokeStyle = "#1e293b";
+        ctx.stroke();
+
+        // Main Pipe Body
+        ctx.lineWidth = pr * 1.8;
+        ctx.strokeStyle = "#64748b";
+        ctx.stroke();
+
+        // Lighting Highlight
+        ctx.lineWidth = pr * 0.8;
+        ctx.strokeStyle = "#94a3b8";
+        ctx.stroke();
+        ctx.restore();
+
+        // Entry Flange (Receiving Water)
         ctx.fillStyle = "#475569";
-        roundRect(px - pr - 2, dropY - pr - stubH - 4, pr * 2 + 4, 6, 2);
-        drawSegment(px - pr, dropY + pr, pr * 2, stubH, true);
-        ctx.fillStyle = "#475569";
-        roundRect(px - pr - 2, dropY + pr + stubH - 2, pr * 2 + 4, 6, 2);
+        roundRect(px - pr - 4, vertStartY, pr * 2 + 8, 8, 2);
 
-        // Target End (Top and Bottom Stubs)
-        drawSegment(targetX - pr, dropY - pr - stubH, pr * 2, stubH, true);
-        ctx.fillStyle = "#475569";
-        roundRect(targetX - pr - 2, dropY - pr - stubH - 4, pr * 2 + 4, 6, 2);
-        drawSegment(targetX - pr, dropY + pr, pr * 2, stubH, true);
-        ctx.fillStyle = "#475569";
-        roundRect(targetX - pr - 2, dropY + pr + stubH - 2, pr * 2 + 4, 6, 2);
+        // Exit Flange (Dropping Water)
+        roundRect(targetX - pr - 4, vertEndY - 8, pr * 2 + 8, 8, 2);
 
-        // Dynamically sized font
+        // Value text
         const fontSize = Math.max(12, CFG.unitW * 0.35);
-
         const midX = (px + targetX) / 2;
         ctx.fillStyle = "white";
         ctx.font = `900 ${fontSize}px Nunito`;
@@ -770,11 +789,10 @@
         ctx.textBaseline = "middle";
         ctx.fillText(val, midX, dropY - CFG.unitW * 0.35);
 
-        // Responsive Reverse Button sizes
+        // Reverse Button
         const btnW = CFG.unitW * 0.6;
         const btnH = CFG.unitW * 0.35;
         const btnY = dropY + CFG.unitW * 0.15;
-
         ctx.fillStyle = "#475569";
         roundRect(midX - btnW / 2, btnY, btnW, btnH, btnH / 2);
         ctx.fillStyle = "white";
@@ -819,54 +837,35 @@
           );
       }
 
-      function drawJoint(x, y) {
-        // Redesigned to be a smaller, cleaner rounded joint
-        const jSize = CFG.pipeRadius * 1.3;
-        ctx.fillStyle = "#475569";
-        roundRect(x - jSize, y - jSize, jSize * 2, jSize * 2, jSize * 0.3);
-        ctx.fillStyle = "#94a3b8";
-        ctx.beginPath();
-        ctx.arc(x, y, jSize * 0.7, 0, Math.PI * 2);
-        ctx.fill();
-        ctx.fillStyle = "#0f172a";
-        ctx.beginPath();
-        ctx.arc(x, y, jSize * 0.3, 0, Math.PI * 2);
-        ctx.fill();
-      }
-
       function renderWaterPath() {
         if (flowDist <= 0) return;
+        ctx.beginPath();
+
+        pathSegments.forEach((seg) => {
+          if (seg.type === "start") {
+            ctx.moveTo(seg.x, seg.y);
+          } else if (seg.type === "line") {
+            ctx.lineTo(seg.x, seg.y);
+          } else if (seg.type === "arcTo") {
+            ctx.arcTo(seg.x1, seg.y1, seg.x2, seg.y2, seg.radius);
+          }
+        });
+
+        // Use dashed line trick to perfectly fill the pipe's internal arcs up to flowDist
+        ctx.setLineDash([flowDist, 999999]);
+        ctx.lineDashOffset = 0;
+
         ctx.lineWidth = CFG.pipeRadius * 1.2;
         ctx.strokeStyle = "#0ea5e9";
         ctx.lineCap = "round";
         ctx.lineJoin = "round";
-        ctx.beginPath();
-
-        let currentDrawDist = flowDist;
-        let started = false;
-
-        pathSegments.forEach((seg) => {
-          if (currentDrawDist <= 0) return;
-          let drawLen = Math.min(seg.len, currentDrawDist);
-
-          if (!started) {
-            ctx.moveTo(
-              seg.type === "v" ? seg.x : seg.x1,
-              seg.type === "v" ? seg.y1 : seg.y,
-            );
-            started = true;
-          }
-
-          if (seg.type === "v") ctx.lineTo(seg.x, seg.y1 + drawLen);
-          else ctx.lineTo(seg.x1 + drawLen * seg.dir, seg.y);
-
-          currentDrawDist -= seg.len;
-        });
-
         ctx.stroke();
+
         ctx.lineWidth = CFG.pipeRadius * 0.6;
         ctx.strokeStyle = "#7dd3fc";
         ctx.stroke();
+
+        ctx.setLineDash([]); // Restore stroke styling for rest of the game
       }
 
       // --- Main Loop & Rendering ---
@@ -922,8 +921,6 @@
         ctx.fillStyle = "#0f172a";
         ctx.fillRect(0, 0, LOGIC_W, LOGIC_H);
 
-        // Grid Drawing removed to make background solid dark
-
         const pipeWidth = CFG.units * CFG.unitW + CFG.unitW * 2;
         const pipeStartX = offsetX - CFG.unitW;
         const rulerHeight = CFG.unitW * 0.8;
@@ -940,14 +937,22 @@
           false,
         );
 
-        // Output stub sticking below the top pipe
         const startPx = offsetX + level.start * CFG.unitW;
         drawSegment(
           startPx - CFG.pipeRadius,
-          topPipeY + rulerHeight / 2,
+          topPipeY,
           CFG.pipeRadius * 2,
-          CFG.unitW * 0.3,
+          CFG.stepH / 2,
           true,
+        );
+
+        ctx.fillStyle = "#475569";
+        roundRect(
+          startPx - CFG.pipeRadius - 2,
+          topPipeY + CFG.stepH / 2 - 8,
+          CFG.pipeRadius * 2 + 4,
+          8,
+          2,
         );
 
         ctx.textAlign = "center";
@@ -971,14 +976,13 @@
           false,
         );
 
-        // Flange on bottom pipe (The target)
         const targetPx = offsetX + level.target * CFG.unitW;
-        const flangeY = bottomPipeY - rulerHeight / 2;
+        const targetTopY = bottomPipeY - CFG.stepH / 2;
         drawSegment(
           targetPx - CFG.pipeRadius,
-          flangeY - CFG.unitW * 0.3,
+          targetTopY,
           CFG.pipeRadius * 2,
-          CFG.unitW * 0.3,
+          CFG.stepH / 2,
           true,
         );
 
@@ -986,9 +990,9 @@
         ctx.beginPath();
         ctx.roundRect(
           targetPx - CFG.unitW * 0.35,
-          flangeY - CFG.unitW * 0.4,
+          targetTopY,
           CFG.unitW * 0.7,
-          CFG.unitW * 0.15,
+          8,
           4,
         );
         ctx.fill();
@@ -996,9 +1000,9 @@
         ctx.beginPath();
         ctx.roundRect(
           targetPx - CFG.unitW * 0.25,
-          flangeY - CFG.unitW * 0.35,
+          targetTopY + 2,
           CFG.unitW * 0.5,
-          CFG.unitW * 0.08,
+          4,
           2,
         );
         ctx.fill();
@@ -1012,14 +1016,14 @@
           ctx.fillText(i, px, bottomPipeY + 4);
         }
 
-        // Render Placed Pipes
+        // Render Placed Pipes (NEW S-Curve Logic)
         placedPipes.forEach((p) => {
-          drawPipeStructure(p.col, p.row, p.val, p.dir, false);
+          drawSeamlessPipeStructure(p.col, p.row, p.val, p.dir, false);
         });
 
         // Render Active Drag Ghost
         if (activeDragPipe) {
-          drawPipeStructure(
+          drawSeamlessPipeStructure(
             snapCol,
             snapRow,
             activeDragPipe.val,
