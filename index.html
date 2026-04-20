@@ -3,7 +3,7 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Pipe Flow Puzzle</title>
+    <title>Aqua Flow</title>
     <link
       href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;700;900&display=swap"
       rel="stylesheet"
@@ -35,7 +35,7 @@
         color: var(--text);
         display: flex;
         justify-content: center;
-        align-items: center;
+        align-items: center; 
         user-select: none;
       }
 
@@ -88,11 +88,9 @@
         position: relative;
         width: 100%;
         height: 560px; /* Fixed logical height */
-        background-color: #162032;
-        box-shadow:
-          inset 0 0 40px rgba(0, 0, 0, 0.6),
-          0 8px 24px rgba(0, 0, 0, 0.3);
-        border: 2px solid #334155;
+        background-color: #162032; 
+        box-shadow: inset 0 0 40px rgba(0, 0, 0, 0.6), 0 8px 24px rgba(0, 0, 0, 0.3);
+        border: 2px solid #334155; 
         border-radius: 16px;
         overflow: hidden;
         margin: 5px 0;
@@ -134,15 +132,9 @@
         color: #cbd5e1;
         margin-bottom: 30px;
       }
-      .overlay.lose h2 {
-        color: var(--danger);
-      }
-      .overlay.win h2 {
-        color: var(--success);
-      }
-      .overlay.partial h2 {
-        color: #f59e0b;
-      } /* Orange/Gold for Partial Win */
+      .overlay.lose h2 { color: var(--danger); }
+      .overlay.win h2 { color: var(--success); }
+      .overlay.partial h2 { color: #f59e0b; } /* Orange/Gold for Partial Win */
 
       .btn {
         font-family: "Nunito", sans-serif;
@@ -195,9 +187,7 @@
         align-items: center;
         cursor: grab;
         flex-shrink: 0;
-        transition:
-          transform 0.1s,
-          opacity 0.2s;
+        transition: transform 0.1s, opacity 0.2s;
       }
       .pipe-block:active {
         cursor: grabbing;
@@ -250,9 +240,7 @@
         justify-content: center;
         align-items: center;
         z-index: 100;
-        transition:
-          opacity 0.5s ease,
-          visibility 0.5s ease;
+        transition: opacity 0.5s ease, visibility 0.5s ease;
       }
       #overlay-start.hidden {
         opacity: 0;
@@ -278,7 +266,7 @@
         color: #38bdf8;
         text-transform: uppercase;
         letter-spacing: 2px;
-        text-shadow: 0 4px 10px rgba(0, 0, 0, 0.5);
+        text-shadow: 0 4px 10px rgba(0,0,0,0.5);
       }
       .start-instructions {
         color: #cbd5e1;
@@ -295,89 +283,107 @@
         color: #38bdf8;
         font-weight: 900;
       }
+
+      /* --- Start Menu Animations --- */
+      @keyframes spinValveStart {
+        100% { transform: rotate(360deg); }
+      }
+      @keyframes waterFlowStart {
+        to { stroke-dashoffset: -30; }
+      }
+      
+      /* New Bursting Spill Animations (Mimics In-Game Physics) */
+      @keyframes spillAnim1 {
+        0% { transform: translate(0, 0) scale(1); opacity: 1; }
+        30% { transform: translate(-8px, -15px) scale(1.2); opacity: 1; }
+        100% { transform: translate(-20px, 60px) scale(0); opacity: 0; }
+      }
+      @keyframes spillAnim2 {
+        0% { transform: translate(0, 0) scale(1); opacity: 1; }
+        30% { transform: translate(12px, -12px) scale(1.1); opacity: 1; }
+        100% { transform: translate(30px, 50px) scale(0); opacity: 0; }
+      }
+      @keyframes spillAnim3 {
+        0% { transform: translate(0, 0) scale(1); opacity: 1; }
+        30% { transform: translate(-4px, -20px) scale(1.1); opacity: 1; }
+        100% { transform: translate(-10px, 55px) scale(0); opacity: 0; }
+      }
+      @keyframes spillAnim4 {
+        0% { transform: translate(0, 0) scale(1); opacity: 1; }
+        30% { transform: translate(6px, -18px) scale(1.2); opacity: 1; }
+        100% { transform: translate(15px, 65px) scale(0); opacity: 0; }
+      }
+      @keyframes spillAnim5 {
+        0% { transform: translate(0, 0) scale(1); opacity: 1; }
+        30% { transform: translate(-15px, -8px) scale(1); opacity: 1; }
+        100% { transform: translate(-35px, 45px) scale(0); opacity: 0; }
+      }
+      @keyframes spillAnim6 {
+        0% { transform: translate(0, 0) scale(1); opacity: 1; }
+        30% { transform: translate(18px, -5px) scale(1); opacity: 1; }
+        100% { transform: translate(40px, 40px) scale(0); opacity: 0; }
+      }
+
+      .spill-1 { animation: spillAnim1 0.8s linear infinite 0.0s; }
+      .spill-2 { animation: spillAnim2 0.7s linear infinite 0.1s; }
+      .spill-3 { animation: spillAnim3 0.9s linear infinite 0.2s; }
+      .spill-4 { animation: spillAnim4 0.8s linear infinite 0.3s; }
+      .spill-5 { animation: spillAnim5 0.7s linear infinite 0.4s; }
+      .spill-6 { animation: spillAnim6 0.9s linear infinite 0.5s; }
+      .spill-7 { animation: spillAnim3 0.8s linear infinite 0.6s; }
+      .spill-8 { animation: spillAnim1 0.7s linear infinite 0.7s; }
+
+      .anim-valve-start {
+        transform-origin: 40px 40px;
+        animation: spinValveStart 3s linear infinite;
+      }
+      .anim-water-start {
+        stroke-dasharray: 15 15;
+        animation: waterFlowStart 0.8s linear infinite;
+      }
+
+      .inst-heading {
+        color: #38bdf8;
+        font-size: 24px;
+        margin: 0 0 15px 0;
+        text-transform: uppercase;
+        letter-spacing: 1px;
+        text-align: center;
+      }
+      .start-instructions ol {
+        margin: 0;
+        padding-left: 24px;
+      }
+      .start-instructions li {
+        margin-bottom: 12px;
+      }
     </style>
   </head>
   <body>
     <div id="app-container">
+      
       <!-- Start Screen Overlay -->
       <div id="overlay-start">
         <div class="start-modal">
-          <!-- Standalone Pipe Icon -->
-          <svg
-            width="140"
-            height="70"
-            viewBox="0 0 140 70"
-            xmlns="http://www.w3.org/2000/svg"
-          >
-            <path
-              d="M 15 35 L 125 35"
-              fill="none"
-              stroke="#1e293b"
-              stroke-width="26"
-              stroke-linecap="round"
-            />
-            <path
-              d="M 15 35 L 125 35"
-              fill="none"
-              stroke="#64748b"
-              stroke-width="20"
-              stroke-linecap="round"
-            />
-            <path
-              d="M 15 35 L 125 35"
-              fill="none"
-              stroke="#94a3b8"
-              stroke-width="10"
-              stroke-linecap="round"
-            />
-            <rect x="0" y="20" width="16" height="30" rx="4" fill="#475569" />
-            <rect x="124" y="20" width="16" height="30" rx="4" fill="#475569" />
-            <circle cx="70" cy="35" r="16" fill="white" />
-            <circle
-              cx="70"
-              cy="35"
-              r="16"
-              fill="none"
-              stroke="#64748b"
-              stroke-width="4"
-            />
-            <path
-              d="M 62 35 L 78 35 M 70 27 L 70 43"
-              stroke="#38bdf8"
-              stroke-width="5"
-              stroke-linecap="round"
-            />
-          </svg>
-
-          <h1>Pipe Flow</h1>
-          <button
-            class="btn"
-            id="btn-play-now"
-            style="font-size: 26px; padding: 18px 56px"
-          >
-            Play Now
-          </button>
-
+          <!-- Animated Pipe & Valve Icon -->
+          
+          <h1>Aqua Flow</h1>
+          <button class="btn" id="btn-play-now" style="font-size: 26px; padding: 18px 56px;">Play Now</button>
+          
           <div class="start-instructions">
-            <p>
-              <span>🎯 Goal:</span> Connect pipes to drain water to the target
-              pool.
-            </p>
-            <p>
-              <span>🖱️ Controls:</span> Drag pipes to the wall. Click
-              <span>⇄</span> to reverse flow.
-            </p>
-            <p>
-              <span>⭐ Rules:</span> Watch out for level constraints like "Use
-              exactly 3 pipes"!
-            </p>
+            <h2 class="inst-heading">Instructions</h2>
+            <ol>
+              <li><span>Goal:</span> Connect pipes to drain water to the target pool.</li>
+              <li><span>Controls:</span> Drag pipes to the wall. Click the reverse icon to change flow direction.</li>
+              <li><span>Rules:</span> Pay attention to level constraints like "Use exactly 3 pipes"!</li>
+            </ol>
           </div>
         </div>
       </div>
 
       <header>
         <div>
-          <h1>Pipe Flow</h1>
+          <h1>Aqua Flow</h1>
           <div class="level-text" id="level-desc">
             Level 1: Connect to the drain!
           </div>
@@ -397,16 +403,7 @@
         <div id="overlay-partial" class="overlay partial">
           <h2>Good Job!</h2>
           <p>The water reached the drain, but...</p>
-          <p
-            id="partial-msg"
-            style="
-              font-size: 28px;
-              font-weight: 900;
-              color: #fcd34d;
-              margin-top: -20px;
-              margin-bottom: 30px;
-            "
-          ></p>
+          <p id="partial-msg" style="font-size: 28px; font-weight: 900; color: #fcd34d; margin-top: -20px; margin-bottom: 30px;"></p>
           <button class="btn" id="btn-retry-partial">Try Again</button>
         </div>
 
@@ -426,8 +423,7 @@
 
       <div id="instructions">
         Drag pipes <span class="highlight">freely onto the wall</span>. Drag
-        placed pipes to move them. Click <span class="highlight">⇄</span> to
-        reverse direction.
+        placed pipes to move them. Click <span class="highlight">⇄</span> to reverse direction.
       </div>
     </div>
 
@@ -435,10 +431,7 @@
       // --- Universal App Scaling ---
       function resizeApp() {
         const app = document.getElementById("app-container");
-        const scale = Math.min(
-          window.innerWidth / 1200,
-          window.innerHeight / 800,
-        );
+        const scale = Math.min(window.innerWidth / 1200, window.innerHeight / 800);
         app.style.transform = `scale(${scale})`;
       }
       window.addEventListener("resize", resizeApp);
@@ -446,10 +439,10 @@
 
       // --- Fixed Canvas Logic Dimensions ---
       const LOGIC_W = 1200;
-      const LOGIC_H = 560;
+      const LOGIC_H = 560; 
       const canvas = document.getElementById("gameCanvas");
       const ctx = canvas.getContext("2d");
-
+      
       canvas.width = LOGIC_W * 2;
       canvas.height = LOGIC_H * 2;
       ctx.scale(2, 2);
@@ -457,74 +450,59 @@
       // --- Game Configuration ---
       const CFG = {
         units: 20,
-        unitW: 52,
+        unitW: 52,        
         waterSpeed: 350,
-        pipeRadius: 16,
+        pipeRadius: 16,   
         topRulerY: 70,
-        bottomRulerY: 490,
+        bottomRulerY: 490
       };
-      const offsetX = (LOGIC_W - CFG.units * CFG.unitW) / 2;
+      const offsetX = (LOGIC_W - (CFG.units * CFG.unitW)) / 2; 
 
       // --- Custom Handcrafted Levels with Conditions ---
-      // Condition Types:
+      // Condition Types: 
       // 0 = Minimum pipes needed (val = count)
       // 1 = Exact pipes needed (val = count)
       // 2 = Maximum/All pipes needed (uses all blocks in tray)
       const LEVELS = [
         {
-          id: 1,
-          start: 12,
-          target: 15,
-          blocks: [7, 4, 8, 5, 2],
+          id: 1, start: 12, target: 15, blocks: [7, 4, 8, 5, 2],
           desc: "Reach the target! Try using at least 2 pipes.",
           maxRows: 4,
-          condition: { type: 0, val: 2 },
+          condition: { type: 0, val: 2 } 
         },
         {
-          id: 2,
-          start: 16,
-          target: 7,
-          blocks: [9, 5, 4, 8, 3],
+          id: 2, start: 16, target: 7, blocks: [9, 5, 4, 8, 3],
           desc: "Use exactly 3 pipes to reach the target.",
           maxRows: 4,
-          condition: { type: 1, val: 3 },
+          condition: { type: 1, val: 3 } 
         },
         {
-          id: 3,
-          start: 4,
-          target: 13,
-          blocks: [7, 2, 8, 5, 6, 3],
+          id: 3, start: 4, target: 13, blocks: [7, 2, 8, 5, 6, 3],
           desc: "Zig-zag time! Use exactly 4 pipes.",
           maxRows: 5,
-          condition: { type: 1, val: 4 },
+          condition: { type: 1, val: 4 } 
         },
         {
-          id: 4,
-          start: 10,
-          target: 11,
-          blocks: [6, 7, 4, 5, 3],
+          id: 4, start: 10, target: 11, blocks: [6, 7, 4, 5, 3],
           desc: "Long journey: Use ALL 5 pipes in the tray.",
           maxRows: 5,
-          condition: { type: 2 },
+          condition: { type: 2 } 
         },
         {
-          id: 5,
-          start: 15,
-          target: 6,
-          blocks: [9, 4, 8, 3, 5, 7],
+          id: 5, start: 15, target: 6, blocks: [9, 4, 8, 3, 5, 7],
           desc: "Master challenge: Use exactly 5 pipes!",
           maxRows: 6,
-          condition: { type: 1, val: 5 },
-        },
+          condition: { type: 1, val: 5 } 
+        }
       ];
 
       // --- State ---
       let currentLvl = 0;
       let level = LEVELS[currentLvl];
-      let placedPipes = [];
+      let placedPipes = []; 
       let available = [];
-      let gameState = "build";
-      let stepH = 0;
+      let gameState = "build"; 
+      let stepH = 0; 
 
       let isValveOpen = false;
       let currentValveRotation = 0;
@@ -539,11 +517,9 @@
       let cameraY = 0;
 
       // Drag System
-      let mouseX = 0,
-        mouseY = 0;
-      let activeDragPipe = null;
-      let snapCol = 0,
-        snapRow = 1;
+      let mouseX = 0, mouseY = 0;
+      let activeDragPipe = null; 
+      let snapCol = 0, snapRow = 1;
 
       function getRowY(rowIdx) {
         if (rowIdx === 0) return CFG.topRulerY;
@@ -554,11 +530,7 @@
       function initLevel() {
         level = LEVELS[currentLvl];
         placedPipes = [];
-        available = level.blocks.map((b, i) => ({
-          val: b,
-          id: `p_${currentLvl}_${i}`,
-          dir: 1,
-        }));
+        available = level.blocks.map((b, i) => ({ val: b, id: `p_${currentLvl}_${i}`, dir: 1 }));
         gameState = "build";
 
         const totalDistance = CFG.bottomRulerY - CFG.topRulerY;
@@ -578,21 +550,21 @@
       }
 
       function createPipeSVG(val) {
-        const pr = 10;
-        const stepH = 40;
-
-        const px = 24;
+        const pr = 10;     
+        const stepH = 40;  
+        
+        const px = 24;    
         const targetX = px + 64; // Fixed visual length so all tray items are the exact same size!
-
+        
         const width = targetX + 24;
         const height = 90;
-
+        
         const dropY = 45;
         const vertStartY = dropY - stepH / 2;
         const vertEndY = dropY + stepH / 2;
-
+        
         const radius = Math.min(pr * 1.5, Math.abs(targetX - px) / 2);
-
+        
         const pathData = `M ${px} ${vertStartY} L ${px} ${dropY - radius} A ${radius} ${radius} 0 0 0 ${px + radius} ${dropY} L ${targetX - radius} ${dropY} A ${radius} ${radius} 0 0 1 ${targetX} ${dropY + radius} L ${targetX} ${vertEndY}`;
 
         return `<svg width="${width}" height="${height}" viewBox="0 0 ${width} ${height}" xmlns="http://www.w3.org/2000/svg">
@@ -609,17 +581,16 @@
           <rect x="${targetX - pr - 3}" y="${vertEndY - 6}" width="${pr * 2 + 6}" height="6" rx="2" fill="#475569" />
           
           <!-- Reverse Button Graphic -->
-          <rect x="${(px + targetX) / 2 - 14}" y="${dropY - 20}" width="28" height="16" rx="8" fill="#475569" />
-          <text x="${(px + targetX) / 2}" y="${dropY - 8}" fill="white" font-size="11" font-weight="bold" font-family="sans-serif" text-anchor="middle">⇄</text>
+          <rect x="${(px + targetX)/2 - 14}" y="${dropY - 20}" width="28" height="16" rx="8" fill="#475569" />
+          <text x="${(px + targetX)/2}" y="${dropY - 8}" fill="white" font-size="11" font-weight="bold" font-family="sans-serif" text-anchor="middle">⇄</text>
           
           <!-- Value Text shifted downward -->
-          <text x="${(px + targetX) / 2}" y="${dropY + 30}" fill="white" font-size="20" font-weight="900" font-family="Nunito, sans-serif" text-anchor="middle">${val}</text>
+          <text x="${(px + targetX)/2}" y="${dropY + 30}" fill="white" font-size="20" font-weight="900" font-family="Nunito, sans-serif" text-anchor="middle">${val}</text>
         </svg>`;
       }
 
       function updateUI() {
-        document.getElementById("level-desc").innerText =
-          `Level ${currentLvl + 1}: ${level.desc}`;
+        document.getElementById("level-desc").innerText = `Level ${currentLvl + 1}: ${level.desc}`;
         document.getElementById("equation-panel").innerText = level.start;
 
         const tray = document.getElementById("tray");
@@ -636,13 +607,10 @@
 
             el.addEventListener("dragstart", (e) => {
               const img = new Image();
-              img.src =
-                "data:image/gif;base64,R0lGODlhAQABAAD/ACwAAAAAAQABAAACADs=";
+              img.src = "data:image/gif;base64,R0lGODlhAQABAAD/ACwAAAAAAQABAAACADs="; 
               e.dataTransfer.setDragImage(img, 0, 0);
               activeDragPipe = { ...b };
-              setTimeout(() => {
-                el.style.opacity = "0.2";
-              }, 0);
+              setTimeout(() => { el.style.opacity = "0.2"; }, 0); 
             });
 
             el.addEventListener("dragend", () => {
@@ -660,69 +628,47 @@
       function buildFlowGraph() {
         let seq = [];
         let curCol = level.start;
-        let curRow = 0;
+        let curRow = 0; 
         let totDist = 0;
         let reachedTarget = false;
-        let finalX = 0,
-          finalY = 0;
+        let finalX = 0, finalY = 0;
         let activePipeCount = 0; // Tracks ONLY pipes that water passes through
 
         let currentX = offsetX + curCol * CFG.unitW;
-        let currentY = getRowY(0);
-        seq.push({ type: "start", x: currentX, y: currentY });
+        let currentY = getRowY(0); 
+        seq.push({ type: 'start', x: currentX, y: currentY });
 
         for (let r = 1; r <= level.maxRows + 1; r++) {
-          const nextPipe = placedPipes.find(
-            (p) =>
-              p.row === r &&
-              (p.col === curCol || p.col + p.val * p.dir === curCol),
-          );
-
+          const nextPipe = placedPipes.find((p) => p.row === r && (p.col === curCol || p.col + (p.val * p.dir) === curCol));
+          
           let dropY = getRowY(r);
           let px = offsetX + curCol * CFG.unitW;
 
           if (nextPipe) {
             activePipeCount++; // Increment count when water flows through this pipe
-            let exitCol =
-              nextPipe.col === curCol
-                ? nextPipe.col + nextPipe.val * nextPipe.dir
-                : nextPipe.col;
+            let exitCol = (nextPipe.col === curCol) ? (nextPipe.col + nextPipe.val * nextPipe.dir) : nextPipe.col;
             let targetX = offsetX + exitCol * CFG.unitW;
-
+            
             const pr = CFG.pipeRadius;
             const radius = Math.min(pr * 1.5, Math.abs(targetX - px) / 2);
             const flowDir = Math.sign(targetX - px);
 
-            let len1 = dropY - radius - currentY;
+            let len1 = (dropY - radius) - currentY;
             if (len1 > 0) totDist += len1;
             let arcLen = (Math.PI / 2) * radius;
             totDist += arcLen;
-            seq.push({
-              type: "arcTo",
-              x1: px,
-              y1: dropY,
-              x2: px + flowDir * radius,
-              y2: dropY,
-              radius: radius,
-            });
+            seq.push({ type: 'arcTo', x1: px, y1: dropY, x2: px + flowDir * radius, y2: dropY, radius: radius });
 
             let horizLen = Math.abs(targetX - px) - 2 * radius;
             if (horizLen > 0) totDist += horizLen;
             totDist += arcLen;
-            seq.push({
-              type: "arcTo",
-              x1: targetX,
-              y1: dropY,
-              x2: targetX,
-              y2: dropY + radius,
-              radius: radius,
-            });
+            seq.push({ type: 'arcTo', x1: targetX, y1: dropY, x2: targetX, y2: dropY + radius, radius: radius });
 
             let vertEndY = dropY + stepH / 2;
             let len2 = vertEndY - (dropY + radius);
             if (len2 > 0) {
-              totDist += len2;
-              seq.push({ type: "line", x: targetX, y: vertEndY });
+               totDist += len2;
+               seq.push({ type: 'line', x: targetX, y: vertEndY });
             }
 
             curCol = exitCol;
@@ -733,7 +679,7 @@
             finalY = vertEndY;
           } else {
             if (curCol === level.target) {
-              let targetDropY = getRowY(level.maxRows + 1);
+              let targetDropY = getRowY(level.maxRows + 1); 
               let dropLen = targetDropY - currentY;
               seq.push({ type: "line", x: px, y: targetDropY });
               totDist += dropLen;
@@ -747,18 +693,11 @@
               finalX = px;
               finalY = spillDropY;
             }
-            break;
+            break; 
           }
         }
 
-        return {
-          seq,
-          finalX,
-          finalY,
-          totalDist: totDist,
-          reachedTarget,
-          activePipeCount,
-        };
+        return { seq, finalX, finalY, totalDist: totDist, reachedTarget, activePipeCount };
       }
 
       function getMousePos(e) {
@@ -767,19 +706,12 @@
         const scaleY = LOGIC_H / rect.height;
         return {
           x: (e.clientX - rect.left) * scaleX,
-          y: (e.clientY - rect.top) * scaleY,
+          y: (e.clientY - rect.top) * scaleY
         };
       }
 
-      canvas.addEventListener("dragover", (e) => {
-        e.preventDefault();
-        updateMouseSnap(e);
-      });
-      canvas.addEventListener("drop", (e) => {
-        e.preventDefault();
-        updateMouseSnap(e);
-        if (activeDragPipe) dropActivePipe();
-      });
+      canvas.addEventListener("dragover", (e) => { e.preventDefault(); updateMouseSnap(e); });
+      canvas.addEventListener("drop", (e) => { e.preventDefault(); updateMouseSnap(e); if (activeDragPipe) dropActivePipe(); });
 
       canvas.addEventListener("pointerdown", (e) => {
         if (gameState !== "build" || isTransitioning) return;
@@ -799,32 +731,16 @@
           let targetX = px + p.val * p.dir * CFG.unitW;
           let midX = (px + targetX) / 2;
 
-          if (
-            Math.hypot(pos.x - midX, pos.y - (dropY - 32)) <
-            CFG.unitW * 0.4
-          ) {
-            placedPipes[i].col =
-              placedPipes[i].col + placedPipes[i].val * placedPipes[i].dir;
+          if (Math.hypot(pos.x - midX, pos.y - (dropY - 32)) < CFG.unitW * 0.4) {
+            placedPipes[i].col = placedPipes[i].col + placedPipes[i].val * placedPipes[i].dir;
             placedPipes[i].dir *= -1;
             return;
           }
 
           let vertStartY = dropY - stepH / 2;
-          const inLeftVert =
-            pos.x >= px - pr &&
-            pos.x <= px + pr &&
-            pos.y >= vertStartY &&
-            pos.y <= vertStartY + stepH;
-          const inRightVert =
-            pos.x >= targetX - pr &&
-            pos.x <= targetX + pr &&
-            pos.y >= vertStartY &&
-            pos.y <= vertStartY + stepH;
-          const inHoriz =
-            pos.x >= Math.min(px, targetX) - pr &&
-            pos.x <= Math.max(px, targetX) + pr &&
-            pos.y >= dropY - pr &&
-            pos.y <= dropY + pr;
+          const inLeftVert = pos.x >= px - pr && pos.x <= px + pr && pos.y >= vertStartY && pos.y <= vertStartY + stepH;
+          const inRightVert = pos.x >= targetX - pr && pos.x <= targetX + pr && pos.y >= vertStartY && pos.y <= vertStartY + stepH;
+          const inHoriz = pos.x >= Math.min(px, targetX) - pr && pos.x <= Math.max(px, targetX) + pr && pos.y >= dropY - pr && pos.y <= dropY + pr;
 
           if (inLeftVert || inRightVert || inHoriz) {
             activeDragPipe = placedPipes.splice(i, 1)[0];
@@ -839,23 +755,19 @@
         updateMouseSnap(e);
         const pos = getMousePos(e);
         let cursor = "default";
-
+        
         const valveX = offsetX + level.start * CFG.unitW;
-        if (Math.hypot(pos.x - valveX, pos.y - getRowY(0)) < CFG.unitW * 0.8)
-          cursor = "pointer";
+        if (Math.hypot(pos.x - valveX, pos.y - getRowY(0)) < CFG.unitW * 0.8) cursor = "pointer";
 
         placedPipes.forEach((p) => {
           let px = offsetX + p.col * CFG.unitW;
           let dropY = getRowY(p.row);
           let targetX = px + p.val * p.dir * CFG.unitW;
-          if (
-            Math.hypot(pos.x - (px + targetX) / 2, pos.y - (dropY - 32)) <
-            CFG.unitW * 0.5
-          ) {
+          if (Math.hypot(pos.x - (px + targetX) / 2, pos.y - (dropY - 32)) < CFG.unitW * 0.5) {
             cursor = "pointer";
           }
         });
-
+        
         if (activeDragPipe) cursor = "grabbing";
         canvas.style.cursor = cursor;
       });
@@ -867,34 +779,28 @@
       function updateMouseSnap(e) {
         if (!activeDragPipe) return;
         const pos = getMousePos(e);
-
-        snapRow = Math.max(
-          1,
-          Math.min(level.maxRows, Math.round((pos.y - CFG.topRulerY) / stepH)),
-        );
+        
+        snapRow = Math.max(1, Math.min(level.maxRows, Math.round((pos.y - CFG.topRulerY) / stepH)));
         snapCol = Math.round((pos.x - offsetX) / CFG.unitW);
         snapCol = Math.max(0, Math.min(CFG.units, snapCol));
 
         let val = activeDragPipe.val;
 
-        if (snapCol + val * activeDragPipe.dir > CFG.units)
-          activeDragPipe.dir = -1;
+        if (snapCol + val * activeDragPipe.dir > CFG.units) activeDragPipe.dir = -1;
         if (snapCol + val * activeDragPipe.dir < 0) activeDragPipe.dir = 1;
 
         let dir = activeDragPipe.dir;
         let leftCol = Math.min(snapCol, snapCol + val * dir);
-        if (leftCol < 0) snapCol += 0 - leftCol;
-        if (Math.max(snapCol, snapCol + val * dir) > CFG.units)
-          snapCol -= Math.max(snapCol, snapCol + val * dir) - CFG.units;
-
+        if (leftCol < 0) snapCol += (0 - leftCol);
+        if (Math.max(snapCol, snapCol + val * dir) > CFG.units) snapCol -= (Math.max(snapCol, snapCol + val * dir) - CFG.units);
+        
         mouseX = pos.x;
         mouseY = pos.y;
       }
 
       function dropActivePipe() {
         if (mouseY > LOGIC_H - 80) {
-          if (!available.find((p) => p.id === activeDragPipe.id))
-            available.push(activeDragPipe);
+          if (!available.find((p) => p.id === activeDragPipe.id)) available.push(activeDragPipe);
         } else {
           placedPipes.push({ ...activeDragPipe, col: snapCol, row: snapRow });
           available = available.filter((p) => p.id !== activeDragPipe.id);
@@ -930,25 +836,19 @@
       // --- Transition Logic Trigger ---
       document.getElementById("btn-next").addEventListener("click", () => {
         document.getElementById("overlay-win").classList.remove("active");
-
+        
         gameState = "transition";
         isTransitioning = true;
-
+        
         const nextIdx = (currentLvl + 1) % LEVELS.length;
-        document.getElementById("level-desc").innerText =
-          `Level ${nextIdx + 1}: ${LEVELS[nextIdx].desc}`;
-        document.getElementById("equation-panel").innerText =
-          LEVELS[nextIdx].start;
+        document.getElementById("level-desc").innerText = `Level ${nextIdx + 1}: ${LEVELS[nextIdx].desc}`;
+        document.getElementById("equation-panel").innerText = LEVELS[nextIdx].start;
         document.getElementById("tray").innerHTML = "";
       });
 
       document.getElementById("btn-reset").addEventListener("click", initLevel);
-      document
-        .getElementById("btn-retry")
-        .addEventListener("click", closeValve);
-      document
-        .getElementById("btn-retry-partial")
-        .addEventListener("click", closeValve);
+      document.getElementById("btn-retry").addEventListener("click", closeValve);
+      document.getElementById("btn-retry-partial").addEventListener("click", closeValve);
 
       // Dismiss Start Menu
       document.getElementById("btn-play-now").addEventListener("click", () => {
@@ -966,12 +866,7 @@
         if (w <= 0 || h <= 0) return;
         ctx.fillStyle = "rgba(0,0,0,0.4)";
         roundRect(x + 2, y + 2, w, h, 4);
-        const grad = ctx.createLinearGradient(
-          x,
-          y,
-          isVertical ? x : x + w,
-          isVertical ? y + h : y,
-        );
+        const grad = ctx.createLinearGradient(x, y, isVertical ? x : x + w, isVertical ? y + h : y);
         grad.addColorStop(0, "#64748b");
         grad.addColorStop(0.3, "#cbd5e1");
         grad.addColorStop(0.7, "#94a3b8");
@@ -979,42 +874,22 @@
         ctx.fillStyle = grad;
         roundRect(x, y, w, h, 4);
         ctx.fillStyle = "#0f172a";
-
+        
         const innerGap = Math.max(2, CFG.pipeRadius * 0.4);
-        if (!isVertical)
-          ctx.fillRect(
-            x + innerGap,
-            y + innerGap * 1.2,
-            w - innerGap * 2,
-            h - innerGap * 2.4,
-          );
-        else
-          ctx.fillRect(
-            x + innerGap * 1.2,
-            y + innerGap,
-            w - innerGap * 2.4,
-            h - innerGap * 2,
-          );
+        if (!isVertical) ctx.fillRect(x + innerGap, y + innerGap*1.2, w - innerGap*2, h - innerGap*2.4);
+        else ctx.fillRect(x + innerGap*1.2, y + innerGap, w - innerGap*2.4, h - innerGap*2);
       }
 
-      function drawSeamlessPipeStructure(
-        col,
-        row,
-        val,
-        dir,
-        isFaded,
-        localStepH,
-        getLocalRowY,
-      ) {
+      function drawSeamlessPipeStructure(col, row, val, dir, isFaded, localStepH, getLocalRowY) {
         const pr = CFG.pipeRadius;
-        let px = offsetX + col * CFG.unitW;
-        let dropY = getLocalRowY(row);
-        let targetX = px + val * dir * CFG.unitW;
-
+        let px = offsetX + col * CFG.unitW; 
+        let dropY = getLocalRowY(row);           
+        let targetX = px + val * dir * CFG.unitW; 
+        
         ctx.globalAlpha = isFaded ? 0.4 : 1.0;
 
-        let vertStartY = dropY - localStepH / 2;
-        let vertEndY = dropY + localStepH / 2;
+        let vertStartY = dropY - localStepH / 2; 
+        let vertEndY = dropY + localStepH / 2;   
 
         const radius = Math.min(pr * 1.5, Math.abs(targetX - px) / 2);
         const flowDir = Math.sign(targetX - px);
@@ -1042,10 +917,10 @@
         ctx.stroke();
         ctx.restore();
 
-        // Entry Flange
+        // Entry Flange 
         ctx.fillStyle = "#475569";
         roundRect(px - pr - 4, vertStartY, pr * 2 + 8, 8, 2);
-        // Exit Flange
+        // Exit Flange 
         roundRect(targetX - pr - 4, vertEndY - 8, pr * 2 + 8, 8, 2);
 
         const midX = (px + targetX) / 2;
@@ -1071,12 +946,11 @@
       }
 
       function drawLevelContent(lvl, pipesArr, fDist, pSegments, parts, vRot) {
-        const localStepH =
-          (CFG.bottomRulerY - CFG.topRulerY) / (lvl.maxRows + 1);
+        const localStepH = (CFG.bottomRulerY - CFG.topRulerY) / (lvl.maxRows + 1);
         const getLocalRowY = (rowIdx) => {
-          if (rowIdx === 0) return CFG.topRulerY;
-          if (rowIdx === lvl.maxRows + 1) return CFG.bottomRulerY;
-          return CFG.topRulerY + rowIdx * localStepH;
+            if (rowIdx === 0) return CFG.topRulerY;
+            if (rowIdx === lvl.maxRows + 1) return CFG.bottomRulerY;
+            return CFG.topRulerY + rowIdx * localStepH;
         };
 
         const pipeWidth = CFG.units * CFG.unitW + CFG.unitW * 2;
@@ -1096,62 +970,32 @@
 
         // TOP RULER PIPE
         const topPipeY = getLocalRowY(0);
-        drawSegment(
-          pipeStartX,
-          topPipeY - rulerHeight / 2,
-          pipeWidth,
-          rulerHeight,
-          false,
-        );
-
+        drawSegment(pipeStartX, topPipeY - rulerHeight / 2, pipeWidth, rulerHeight, false);
+        
         const startPx = offsetX + lvl.start * CFG.unitW;
-        drawSegment(
-          startPx - CFG.pipeRadius,
-          topPipeY,
-          CFG.pipeRadius * 2,
-          localStepH / 2,
-          true,
-        );
+        drawSegment(startPx - CFG.pipeRadius, topPipeY, CFG.pipeRadius * 2, localStepH / 2, true);
         ctx.fillStyle = "#475569";
-        roundRect(
-          startPx - CFG.pipeRadius - 4,
-          topPipeY + localStepH / 2 - 8,
-          CFG.pipeRadius * 2 + 8,
-          8,
-          2,
-        );
-
+        roundRect(startPx - CFG.pipeRadius - 4, topPipeY + localStepH / 2 - 8, CFG.pipeRadius * 2 + 8, 8, 2); 
+        
         ctx.textAlign = "center";
         ctx.textBaseline = "middle";
         for (let i = 0; i <= CFG.units; i++) {
           let px = offsetX + i * CFG.unitW;
           ctx.fillStyle = "#94a3b8";
-          ctx.fillRect(px - 1, topPipeY + rulerHeight / 2 - 8, 2, 8);
+          ctx.fillRect(px - 1, topPipeY + rulerHeight / 2 - 8, 2, 8); 
           ctx.fillStyle = "white";
-          ctx.font = `900 18px Nunito`;
+          ctx.font = `900 18px Nunito`; 
           ctx.fillText(i, px, topPipeY - 2);
         }
 
         // BOTTOM RULER PIPE
         const bottomPipeY = getLocalRowY(lvl.maxRows + 1);
-        drawSegment(
-          pipeStartX,
-          bottomPipeY - rulerHeight / 2,
-          pipeWidth,
-          rulerHeight,
-          false,
-        );
+        drawSegment(pipeStartX, bottomPipeY - rulerHeight / 2, pipeWidth, rulerHeight, false);
 
         const targetPx = offsetX + lvl.target * CFG.unitW;
         const targetTopY = bottomPipeY - localStepH / 2;
-        drawSegment(
-          targetPx - CFG.pipeRadius,
-          targetTopY,
-          CFG.pipeRadius * 2,
-          localStepH / 2,
-          true,
-        );
-
+        drawSegment(targetPx - CFG.pipeRadius, targetTopY, CFG.pipeRadius * 2, localStepH / 2, true);
+        
         ctx.fillStyle = "#f59e0b";
         ctx.beginPath();
         ctx.roundRect(targetPx - 20, targetTopY, 40, 8, 4);
@@ -1164,74 +1008,51 @@
         for (let i = 0; i <= CFG.units; i++) {
           let px = offsetX + i * CFG.unitW;
           ctx.fillStyle = "#94a3b8";
-          ctx.fillRect(px - 1, bottomPipeY - rulerHeight / 2, 2, 8);
-          ctx.fillStyle = i === lvl.target ? "#fcd34d" : "white";
-          ctx.font = `900 18px Nunito`;
+          ctx.fillRect(px - 1, bottomPipeY - rulerHeight / 2, 2, 8); 
+          ctx.fillStyle = i === lvl.target ? "#fcd34d" : "white"; 
+          ctx.font = `900 18px Nunito`; 
           ctx.fillText(i, px, bottomPipeY + 4);
         }
 
         // Draw Pipes
         pipesArr.forEach((p) => {
-          drawSeamlessPipeStructure(
-            p.col,
-            p.row,
-            p.val,
-            p.dir,
-            false,
-            localStepH,
-            getLocalRowY,
-          );
+          drawSeamlessPipeStructure(p.col, p.row, p.val, p.dir, false, localStepH, getLocalRowY);
         });
 
         // Draw Drag Ghost (Only if it's the active level)
         if (activeDragPipe && lvl === level) {
-          drawSeamlessPipeStructure(
-            snapCol,
-            snapRow,
-            activeDragPipe.val,
-            activeDragPipe.dir,
-            true,
-            localStepH,
-            getLocalRowY,
-          );
+          drawSeamlessPipeStructure(snapCol, snapRow, activeDragPipe.val, activeDragPipe.dir, true, localStepH, getLocalRowY);
         }
 
         // Draw Water
         if (fDist > 0) {
-          ctx.beginPath();
-          pSegments.forEach((seg) => {
-            if (seg.type === "start") ctx.moveTo(seg.x, seg.y);
-            else if (seg.type === "line") ctx.lineTo(seg.x, seg.y);
-            else if (seg.type === "arcTo")
-              ctx.arcTo(seg.x1, seg.y1, seg.x2, seg.y2, seg.radius);
-          });
+            ctx.beginPath();
+            pSegments.forEach((seg) => {
+              if (seg.type === "start") ctx.moveTo(seg.x, seg.y);
+              else if (seg.type === "line") ctx.lineTo(seg.x, seg.y);
+              else if (seg.type === "arcTo") ctx.arcTo(seg.x1, seg.y1, seg.x2, seg.y2, seg.radius);
+            });
 
-          ctx.setLineDash([fDist, 999999]);
-          ctx.lineDashOffset = 0;
+            ctx.setLineDash([fDist, 999999]);
+            ctx.lineDashOffset = 0;
 
-          ctx.lineWidth = CFG.pipeRadius * 1.2;
-          ctx.strokeStyle = "#0ea5e9";
-          ctx.lineCap = "round";
-          ctx.lineJoin = "round";
-          ctx.stroke();
+            ctx.lineWidth = CFG.pipeRadius * 1.2;
+            ctx.strokeStyle = "#0ea5e9";
+            ctx.lineCap = "round";
+            ctx.lineJoin = "round";
+            ctx.stroke();
 
-          ctx.lineWidth = CFG.pipeRadius * 0.6;
-          ctx.strokeStyle = "#7dd3fc";
-          ctx.stroke();
-          ctx.setLineDash([]);
+            ctx.lineWidth = CFG.pipeRadius * 0.6;
+            ctx.strokeStyle = "#7dd3fc";
+            ctx.stroke();
+            ctx.setLineDash([]); 
         }
 
         // Draw Particles
         parts.forEach((p) => {
           ctx.fillStyle = `rgba(14, 165, 233, ${p.life})`;
           ctx.beginPath();
-          ctx.arc(
-            p.x,
-            p.y,
-            Math.max(2, CFG.unitW * 0.1) + Math.random() * 2,
-            0,
-            Math.PI * 2,
-          );
+          ctx.arc(p.x, p.y, Math.max(2, CFG.unitW * 0.1) + Math.random() * 2, 0, Math.PI * 2);
           ctx.fill();
         });
 
@@ -1241,27 +1062,15 @@
         ctx.translate(startPx, topPipeY);
         ctx.rotate(vRot);
         ctx.fillStyle = "#ef4444";
-        ctx.beginPath();
-        ctx.arc(0, 0, wheelSize, 0, Math.PI * 2);
-        ctx.fill();
+        ctx.beginPath(); ctx.arc(0, 0, wheelSize, 0, Math.PI * 2); ctx.fill();
         ctx.fillStyle = "#0f172a";
-        ctx.beginPath();
-        ctx.arc(0, 0, wheelSize * 0.6, 0, Math.PI * 2);
-        ctx.fill();
+        ctx.beginPath(); ctx.arc(0, 0, wheelSize * 0.6, 0, Math.PI * 2); ctx.fill();
         ctx.strokeStyle = "#ef4444";
         ctx.lineWidth = wheelSize * 0.2;
-        ctx.beginPath();
-        ctx.moveTo(-wheelSize, 0);
-        ctx.lineTo(wheelSize, 0);
-        ctx.stroke();
-        ctx.beginPath();
-        ctx.moveTo(0, -wheelSize);
-        ctx.lineTo(0, wheelSize);
-        ctx.stroke();
+        ctx.beginPath(); ctx.moveTo(-wheelSize, 0); ctx.lineTo(wheelSize, 0); ctx.stroke();
+        ctx.beginPath(); ctx.moveTo(0, -wheelSize); ctx.lineTo(0, wheelSize); ctx.stroke();
         ctx.fillStyle = "#7f1d1d";
-        ctx.beginPath();
-        ctx.arc(0, 0, wheelSize * 0.25, 0, Math.PI * 2);
-        ctx.fill();
+        ctx.beginPath(); ctx.arc(0, 0, wheelSize * 0.25, 0, Math.PI * 2); ctx.fill();
         ctx.restore();
       }
 
@@ -1269,19 +1078,18 @@
       let lastTime = performance.now();
 
       function updatePhysics(dt) {
-        currentValveRotation +=
-          (targetValveRotation - currentValveRotation) * 8 * dt;
+        currentValveRotation += (targetValveRotation - currentValveRotation) * 8 * dt;
 
         // Transition Animation Logic
         if (isTransitioning) {
-          cameraY -= 1200 * dt; // Scroll speed
-          if (cameraY <= -LOGIC_H) {
-            cameraY = 0;
-            isTransitioning = false;
-            currentLvl = (currentLvl + 1) % LEVELS.length;
-            initLevel();
-          }
-          return;
+            cameraY -= 1200 * dt; // Scroll speed
+            if (cameraY <= -LOGIC_H) {
+                cameraY = 0;
+                isTransitioning = false;
+                currentLvl = (currentLvl + 1) % LEVELS.length;
+                initLevel();
+            }
+            return; 
         }
 
         if (gameState === "flow") {
@@ -1290,6 +1098,7 @@
             flowDist = maxFlowDist;
             const layout = buildFlowGraph();
             if (layout.reachedTarget) {
+              
               // Validate Level Condition using ONLY active water-carrying pipes
               let pipesUsed = layout.activePipeCount;
               let cond = level.condition;
@@ -1297,8 +1106,7 @@
 
               if (cond.type === 0) passed = pipesUsed >= cond.val;
               else if (cond.type === 1) passed = pipesUsed === cond.val;
-              else if (cond.type === 2)
-                passed = pipesUsed === level.blocks.length;
+              else if (cond.type === 2) passed = pipesUsed === level.blocks.length;
 
               if (passed) {
                 gameState = "win";
@@ -1306,18 +1114,14 @@
               } else {
                 gameState = "partial_win";
                 let msg = "";
-                if (cond.type === 0)
-                  msg = `Can you do it using at least ${cond.val} pipes?`;
-                else if (cond.type === 1)
-                  msg = `Can you do it using exactly ${cond.val} pipes?`;
-                else if (cond.type === 2)
-                  msg = `Can you do it using ALL the pipes?`;
-
+                if (cond.type === 0) msg = `Can you do it using at least ${cond.val} pipes?`;
+                else if (cond.type === 1) msg = `Can you do it using exactly ${cond.val} pipes?`;
+                else if (cond.type === 2) msg = `Can you do it using ALL the pipes?`;
+                
                 document.getElementById("partial-msg").innerText = msg;
-                document
-                  .getElementById("overlay-partial")
-                  .classList.add("active");
+                document.getElementById("overlay-partial").classList.add("active");
               }
+
             } else {
               gameState = "spill";
             }
@@ -1333,8 +1137,7 @@
               life: 1.0,
             });
           }
-          if (particles.length > 150)
-            document.getElementById("overlay-lose").classList.add("active");
+          if (particles.length > 150) document.getElementById("overlay-lose").classList.add("active");
         }
 
         for (let i = particles.length - 1; i >= 0; i--) {
@@ -1349,26 +1152,19 @@
 
       function render() {
         ctx.clearRect(0, 0, LOGIC_W, LOGIC_H);
-
+        
         ctx.save();
         ctx.translate(0, cameraY);
 
         // Render Current Level
-        drawLevelContent(
-          level,
-          placedPipes,
-          flowDist,
-          pathSegments,
-          particles,
-          currentValveRotation,
-        );
+        drawLevelContent(level, placedPipes, flowDist, pathSegments, particles, currentValveRotation);
 
         // Render Next Level (spawning in from below during transition scroll)
         if (isTransitioning) {
-          ctx.translate(0, LOGIC_H);
-          let nextLvl = LEVELS[(currentLvl + 1) % LEVELS.length];
-          // Next level has no water, particles, or placed pipes yet
-          drawLevelContent(nextLvl, [], 0, [], [], 0);
+            ctx.translate(0, LOGIC_H);
+            let nextLvl = LEVELS[(currentLvl + 1) % LEVELS.length];
+            // Next level has no water, particles, or placed pipes yet
+            drawLevelContent(nextLvl, [], 0, [], [], 0);
         }
 
         ctx.restore();
