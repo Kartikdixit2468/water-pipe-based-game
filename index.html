@@ -444,6 +444,33 @@
           <p>You connected the path exactly to the target.</p>
           <button class="btn btn-green" id="btn-next">Next Level</button>
         </div>
+
+        <!-- Grand Finale Overlay -->
+        <div
+          id="overlay-game-complete"
+          class="overlay"
+          style="background: rgba(15, 23, 42, 0.95)"
+        >
+          <h2
+            style="
+              color: #fde047;
+              font-size: 72px;
+              text-shadow: 0 4px 15px rgba(253, 224, 71, 0.4);
+            "
+          >
+            🎉 Congratulations! 🎉
+          </h2>
+          <p style="font-size: 28px; color: #f8fafc; margin-bottom: 40px">
+            You are an Aqua Flow Master!
+          </p>
+          <button
+            class="btn btn-green"
+            id="btn-play-again"
+            style="font-size: 26px; padding: 18px 56px"
+          >
+            Play Again
+          </button>
+        </div>
       </div>
 
       <div id="controls">
@@ -494,54 +521,98 @@
       };
       const offsetX = (LOGIC_W - CFG.units * CFG.unitW) / 2;
 
-      // --- Custom Handcrafted Levels with Highlighted HTML Numbers ---
-      const LEVELS = [
-        {
-          id: 1,
-          start: 12,
-          target: 15,
-          blocks: [7, 4, 8, 5, 2],
-          desc: "Reach the target! Try using at least <span class='highlight-number'>2</span> pipes.",
-          maxRows: 4,
-          condition: { type: 0, val: 2 },
-        },
-        {
-          id: 2,
-          start: 16,
-          target: 7,
-          blocks: [9, 5, 4, 8, 3],
-          desc: "Use exactly <span class='highlight-number'>3</span> pipes to reach the target.",
-          maxRows: 4,
-          condition: { type: 1, val: 3 },
-        },
-        {
-          id: 3,
-          start: 4,
-          target: 13,
-          blocks: [7, 2, 8, 5, 6, 3],
-          desc: "Zig-zag time! Use exactly <span class='highlight-number'>4</span> pipes.",
-          maxRows: 5,
-          condition: { type: 1, val: 4 },
-        },
-        {
-          id: 4,
-          start: 10,
-          target: 11,
-          blocks: [6, 7, 4, 5, 3],
-          desc: "Long journey: Use <span class='highlight-number'>ALL 5</span> pipes in the tray.",
-          maxRows: 5,
-          condition: { type: 2 },
-        },
-        {
-          id: 5,
-          start: 15,
-          target: 6,
-          blocks: [9, 4, 8, 3, 5, 7],
-          desc: "Master challenge: Use exactly <span class='highlight-number'>5</span> pipes!",
-          maxRows: 6,
-          condition: { type: 1, val: 5 },
-        },
-      ];
+      // --- Dynamic Level Generator with Smart Constraints ---
+      function generateDynamicLevels(count) {
+        const generated = [];
+
+        // Store descriptions in an object/array mapped exactly by the mode index
+        const descriptions = {
+          0: "Reach the target! Try using at least <span class='highlight-number'>{val}</span> pipes.",
+          1: "Use exactly <span class='highlight-number'>{val}</span> pipes to reach the target.",
+          2: "Master challenge: Use <span class='highlight-number'>ALL {val}</span> pipes in the tray!",
+        };
+
+        for (let id = 1; id <= count; id++) {
+          let start, target, solutionBlocks, pathLen;
+          let isValid = false;
+
+          // 1. Generate a valid path of at least 4 numbers
+          while (!isValid) {
+            start = Math.floor(Math.random() * 21);
+            pathLen = Math.floor(Math.random() * 3) + 4; // Length between 4 and 6 pipes
+            let current = start;
+            solutionBlocks = [];
+            let failed = false;
+
+            for (let i = 0; i < pathLen; i++) {
+              let validMoves = [];
+              // Prevent massive unplayable pipe lengths (keep to 2-9 range)
+              for (let len = 2; len <= 9; len++) {
+                if (current + len <= 20) validMoves.push({ len, dir: 1 });
+                if (current - len >= 0) validMoves.push({ len, dir: -1 });
+              }
+
+              if (validMoves.length === 0) {
+                failed = true;
+                break;
+              }
+
+              let move =
+                validMoves[Math.floor(Math.random() * validMoves.length)];
+              solutionBlocks.push(move.len);
+              current += move.len * move.dir;
+            }
+
+            target = current;
+            if (!failed && target !== start) {
+              isValid = true; // Path safely reached a distinct target!
+            }
+          }
+
+          // 2. Randomly choose Mode 0, 1, or 2
+          let mode = Math.floor(Math.random() * 3);
+          let blocks = [...solutionBlocks];
+          let val = pathLen;
+
+          // 3. Apply constraints and add distractions
+          if (mode === 0) {
+            // Min Pipes
+            val = Math.max(2, pathLen - 1);
+            // Add 1 or 2 distraction pipes
+            blocks.push(Math.floor(Math.random() * 8) + 2);
+            if (Math.random() > 0.5)
+              blocks.push(Math.floor(Math.random() * 8) + 2);
+          } else if (mode === 1) {
+            // Exact Pipes
+            val = pathLen;
+            // Add 1 or 2 distraction pipes
+            blocks.push(Math.floor(Math.random() * 8) + 2);
+            if (Math.random() > 0.5)
+              blocks.push(Math.floor(Math.random() * 8) + 2);
+          } else if (mode === 2) {
+            // Max / ALL Pipes
+            val = pathLen;
+            // Deliberately NO distractions here, they must use exactly the blocks provided!
+          }
+
+          // Shuffle the tray blocks so the order isn't a dead giveaway
+          blocks.sort(() => Math.random() - 0.5);
+
+          generated.push({
+            id: id,
+            start: start,
+            target: target,
+            blocks: blocks,
+            desc: descriptions[mode].replace("{val}", val),
+            maxRows: blocks.length + 1, // Ensures canvas always scales enough rows to drop all blocks
+            condition: { type: mode, val: val },
+          });
+        }
+        return generated;
+      }
+
+      // Generate exactly 5 levels dynamically!
+      const LEVELS = generateDynamicLevels(5);
 
       // --- State ---
       let currentLvl = 0;
@@ -558,6 +629,7 @@
       let maxFlowDist = 0;
       let pathSegments = [];
       let particles = [];
+      let confetti = []; // State for party popper effect
 
       // Transition State
       let isTransitioning = false;
@@ -599,11 +671,15 @@
         targetValveRotation = 0;
         flowDist = 0;
         particles = [];
+        confetti = [];
         activeDragPipe = null;
 
         document.getElementById("overlay-lose").classList.remove("active");
         document.getElementById("overlay-partial").classList.remove("active");
         document.getElementById("overlay-win").classList.remove("active");
+        document
+          .getElementById("overlay-game-complete")
+          .classList.remove("active");
         updateUI();
       }
 
@@ -627,10 +703,16 @@
         const height = 90;
 
         const dropY = 45;
-        const vertStartY = dropY - stepH / 2;
-        const vertEndY = dropY + stepH / 2;
+        const vertStartY = dropY - stepH / 2; // 25
+        const vertEndY = dropY + stepH / 2; // 65
 
-        const radius = Math.min(pr * 1.5, Math.abs(targetX - px) / 2);
+        // Strict boundary to prevent arcTo from backtracking
+        const maxRadius = Math.max(0, stepH / 2 - 1);
+        const radius = Math.min(
+          pr * 1.5,
+          Math.abs(targetX - px) / 2,
+          maxRadius,
+        );
 
         const pathData = `M ${px} ${vertStartY} L ${px} ${dropY - radius} A ${radius} ${radius} 0 0 0 ${px + radius} ${dropY} L ${targetX - radius} ${dropY} A ${radius} ${radius} 0 0 1 ${targetX} ${dropY + radius} L ${targetX} ${vertEndY}`;
 
@@ -720,8 +802,12 @@
                 : nextPipe.col;
             let targetX = offsetX + exitCol * CFG.unitW;
 
-            const pr = CFG.pipeRadius;
-            const radius = Math.min(pr * 1.5, Math.abs(targetX - px) / 2);
+            const maxRadius = Math.max(0, stepH / 2 - 1);
+            const radius = Math.min(
+              CFG.pipeRadius * 1.5,
+              Math.abs(targetX - px) / 2,
+              maxRadius,
+            );
             const flowDir = Math.sign(targetX - px);
 
             let len1 = dropY - radius - currentY;
@@ -830,11 +916,8 @@
           let targetX = px + p.val * p.dir * CFG.unitW;
           let midX = (px + targetX) / 2;
 
-          // Target reverse button accurately (-25 offset from center)
-          if (
-            Math.hypot(pos.x - midX, pos.y - (dropY - 25)) <
-            CFG.unitW * 0.5
-          ) {
+          // Target reverse button accurately (adjusted to btnY center = dropY - 29)
+          if (Math.hypot(pos.x - midX, pos.y - (dropY - 29)) < 25) {
             placedPipes[i].col =
               placedPipes[i].col + placedPipes[i].val * placedPipes[i].dir;
             placedPipes[i].dir *= -1;
@@ -884,8 +967,7 @@
           let dropY = getRowY(p.row);
           let targetX = px + p.val * p.dir * CFG.unitW;
           if (
-            Math.hypot(pos.x - (px + targetX) / 2, pos.y - (dropY - 25)) <
-            CFG.unitW * 0.5
+            Math.hypot(pos.x - (px + targetX) / 2, pos.y - (dropY - 29)) < 25
           ) {
             cursor = "pointer";
           }
@@ -956,10 +1038,38 @@
         gameState = "build";
         flowDist = 0;
         particles = [];
+        confetti = [];
         targetValveRotation += Math.PI;
         document.getElementById("overlay-lose").classList.remove("active");
         document.getElementById("overlay-partial").classList.remove("active");
         document.getElementById("overlay-win").classList.remove("active");
+        document
+          .getElementById("overlay-game-complete")
+          .classList.remove("active");
+      }
+
+      // --- Confetti Generator ---
+      function fireConfetti(startX, startY) {
+        const colors = [
+          "#fde047",
+          "#38bdf8",
+          "#a855f7",
+          "#ef4444",
+          "#10b981",
+          "#f97316",
+        ];
+        for (let i = 0; i < 150; i++) {
+          confetti.push({
+            x: startX,
+            y: startY,
+            vx: (Math.random() - 0.5) * 900,
+            vy: -(Math.random() * 600 + 400),
+            size: Math.random() * 12 + 6,
+            color: colors[Math.floor(Math.random() * colors.length)],
+            rot: Math.random() * 360,
+            rotSpeed: (Math.random() - 0.5) * 500,
+          });
+        }
       }
 
       // --- Triggers & Buttons ---
@@ -996,6 +1106,30 @@
           LEVELS[nextIdx].start;
         document.getElementById("tray").innerHTML = "";
       });
+
+      document
+        .getElementById("btn-play-again")
+        .addEventListener("click", () => {
+          document
+            .getElementById("overlay-game-complete")
+            .classList.remove("active");
+
+          gameState = "transition";
+          isTransitioning = true;
+
+          // Generate 5 completely NEW levels when the player hits 'Play Again'
+          const newLevels = generateDynamicLevels(5);
+          LEVELS.length = 0;
+          LEVELS.push(...newLevels);
+
+          currentLvl = 0;
+          level = LEVELS[currentLvl];
+
+          document.getElementById("level-desc").innerHTML =
+            `Level 1: ${level.desc}`;
+          document.getElementById("equation-panel").innerText = level.start;
+          document.getElementById("tray").innerHTML = "";
+        });
 
       document.getElementById("btn-reset").addEventListener("click", () => {
         initLevel();
@@ -1070,7 +1204,13 @@
         let vertStartY = dropY - localStepH / 2;
         let vertEndY = dropY + localStepH / 2;
 
-        const radius = Math.min(pr * 1.5, Math.abs(targetX - px) / 2);
+        // Strict boundary to prevent arcTo from backtracking on tightly squeezed rows
+        const maxRadius = Math.max(0, localStepH / 2 - 1);
+        const radius = Math.min(
+          pr * 1.5,
+          Math.abs(targetX - px) / 2,
+          maxRadius,
+        );
         const flowDir = Math.sign(targetX - px);
 
         ctx.save();
@@ -1106,12 +1246,12 @@
         ctx.font = `900 20px Nunito`;
         ctx.textAlign = "center";
         ctx.textBaseline = "middle";
-        ctx.fillText(val, midX, dropY + 38);
+        ctx.fillText(val, midX, dropY + 36); // Positioned nicely below the pipe body
 
         // --- Bigger, Blue Reverse Button Graphic ---
         const btnW = 44;
         const btnH = 26;
-        const btnY = dropY - 38;
+        const btnY = dropY - 42; // Floats clearly above the pipe without overlapping
 
         // Button Shadow
         ctx.fillStyle = "#1e3a8a";
@@ -1252,8 +1392,9 @@
           );
         }
 
-        // Draw Water
+        // Draw Water safely wrapped
         if (fDist > 0) {
+          ctx.save(); // Protect canvas state
           ctx.beginPath();
           pSegments.forEach((seg) => {
             if (seg.type === "start") ctx.moveTo(seg.x, seg.y);
@@ -1274,7 +1415,7 @@
           ctx.lineWidth = CFG.pipeRadius * 0.6;
           ctx.strokeStyle = "#7dd3fc";
           ctx.stroke();
-          ctx.setLineDash([]);
+          ctx.restore();
         }
 
         parts.forEach((p) => {
@@ -1380,8 +1521,19 @@
                 passed = pipesUsed === level.blocks.length;
 
               if (passed) {
-                gameState = "win";
-                document.getElementById("overlay-win").classList.add("active");
+                // If it's the absolute last level, show the Grand Finale!
+                if (currentLvl === LEVELS.length - 1) {
+                  gameState = "game_complete";
+                  document
+                    .getElementById("overlay-game-complete")
+                    .classList.add("active");
+                  fireConfetti(layout.finalX, layout.finalY); // Burst from the target pool!
+                } else {
+                  gameState = "win";
+                  document
+                    .getElementById("overlay-win")
+                    .classList.add("active");
+                }
               } else {
                 gameState = "partial_win";
                 let msg = "";
@@ -1424,6 +1576,16 @@
           p.life -= dt * 0.5;
           if (p.life <= 0 || p.y > LOGIC_H) particles.splice(i, 1);
         }
+
+        // Update Confetti Physics
+        for (let i = confetti.length - 1; i >= 0; i--) {
+          let c = confetti[i];
+          c.x += c.vx * dt;
+          c.y += c.vy * dt;
+          c.vy += 900 * dt; // Gravity
+          c.rot += c.rotSpeed * dt;
+          if (c.y > LOGIC_H + 100) confetti.splice(i, 1);
+        }
       }
 
       function render() {
@@ -1446,6 +1608,16 @@
           let nextLvl = LEVELS[(currentLvl + 1) % LEVELS.length];
           drawLevelContent(nextLvl, [], 0, [], [], 0);
         }
+
+        // Draw Confetti on top of everything
+        confetti.forEach((c) => {
+          ctx.save();
+          ctx.translate(c.x, c.y);
+          ctx.rotate((c.rot * Math.PI) / 180);
+          ctx.fillStyle = c.color;
+          ctx.fillRect(-c.size / 2, -c.size / 2, c.size, c.size);
+          ctx.restore();
+        });
 
         ctx.restore();
       }
