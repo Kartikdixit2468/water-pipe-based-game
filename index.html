@@ -2,7 +2,10 @@
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta
+      name="viewport"
+      content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no"
+    />
     <title>Aqua Flow</title>
     <link
       href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;700;900&display=swap"
@@ -27,8 +30,8 @@
       html {
         margin: 0;
         padding: 0;
-        width: 100vw;
-        height: 100vh;
+        width: 100%;
+        height: 100%;
         overflow: hidden;
         background-color: var(--bg-dark);
         font-family: "Nunito", sans-serif;
@@ -37,12 +40,14 @@
         justify-content: center;
         align-items: center;
         user-select: none;
+        -webkit-user-select: none;
+        touch-action: none; /* Prevents mobile browser pull-to-refresh and panning */
       }
 
-      /* Fixed aspect ratio application container */
+      /* Locked Aspect Ratio Container */
       #app-container {
         width: 1200px;
-        height: 800px;
+        height: 720px; /* Tightly packed height to maximize scaling on landscape screens */
         display: flex;
         flex-direction: column;
         transform-origin: center center;
@@ -54,8 +59,8 @@
         display: flex;
         justify-content: space-between;
         align-items: center;
-        padding: 10px 30px;
-        height: 80px;
+        padding: 0 30px;
+        height: 60px;
       }
 
       h1 {
@@ -91,7 +96,7 @@
       #game-wrapper {
         position: relative;
         width: 100%;
-        height: 560px; /* Fixed logical height */
+        height: 540px; /* Fixed logical height */
         background-color: #162032;
         box-shadow:
           inset 0 0 40px rgba(0, 0, 0, 0.6),
@@ -106,6 +111,7 @@
         display: block;
         width: 100%;
         height: 100%;
+        touch-action: none; /* Ensure no accidental scrolling on canvas */
       }
 
       /* Overlays */
@@ -122,6 +128,7 @@
         pointer-events: none;
         transition: opacity 0.3s ease;
         z-index: 10;
+        text-align: center;
       }
       .overlay.active {
         opacity: 1;
@@ -148,7 +155,7 @@
         color: #f59e0b;
       }
 
-      /* Specific styling for the new Level Intro Popup */
+      /* Specific styling for the Level Intro Popup */
       .intro-desc {
         font-size: 28px !important;
         line-height: 1.6;
@@ -205,17 +212,17 @@
       /* Controls */
       #controls {
         width: 100%;
-        padding: 15px 0;
+        padding: 5px 0;
         display: flex;
         gap: 20px;
-        height: 120px;
+        height: 110px;
       }
 
       #tray {
         flex-grow: 1;
         background: var(--ui-bg);
         border-radius: 16px;
-        padding: 15px 24px;
+        padding: 10px 24px;
         display: flex;
         gap: 16px;
         align-items: center;
@@ -232,6 +239,7 @@
         transition:
           transform 0.1s,
           opacity 0.2s;
+        touch-action: none; /* Prevent browser swipe gestures over tray items */
       }
       .pipe-block:active {
         cursor: grabbing;
@@ -248,7 +256,6 @@
       .side-actions {
         display: flex;
         flex-direction: column;
-        gap: 10px;
         justify-content: center;
       }
       .btn-small {
@@ -256,6 +263,7 @@
         box-shadow: 0 4px 0 #1e293b;
         padding: 16px 32px;
         font-size: 16px;
+        white-space: nowrap;
       }
       .btn-small:hover {
         box-shadow: 0 2px 0 #1e293b;
@@ -263,7 +271,7 @@
       }
 
       #instructions {
-        margin-top: 10px;
+        margin: 5px 0 0 0;
         font-size: 16px;
         color: #94a3b8;
         text-align: center;
@@ -273,7 +281,7 @@
         font-weight: bold;
       }
 
-      /* Start Screen Modal (Glassmorphism) */
+      /* Start Screen Modal */
       #overlay-start {
         position: absolute;
         inset: 0;
@@ -308,7 +316,7 @@
       }
       .start-modal h1 {
         font-size: 56px;
-        margin: 15px 0 30px;
+        margin: 10px 0 30px;
         color: #38bdf8;
         text-transform: uppercase;
         letter-spacing: 2px;
@@ -317,7 +325,7 @@
       .start-instructions {
         color: #cbd5e1;
         font-size: 18px;
-        margin-top: 40px;
+        margin-top: 30px;
         line-height: 1.8;
         text-align: left;
         background: rgba(15, 23, 42, 0.5);
@@ -372,7 +380,7 @@
           <button
             class="btn"
             id="btn-play-now"
-            style="font-size: 26px; padding: 18px 56px"
+            style="font-size: 26px; padding: 18px 48px"
           >
             Play Now
           </button>
@@ -488,13 +496,14 @@
     </div>
 
     <script>
-      // --- Universal App Scaling ---
+      // --- Perfect Aspect Ratio Scaling ---
       function resizeApp() {
         const app = document.getElementById("app-container");
-        const scale = Math.min(
-          window.innerWidth / 1200,
-          window.innerHeight / 800,
-        );
+        // Pull exact window dimensions (avoiding mobile 100vh height-cropping bugs)
+        const winW = window.innerWidth;
+        const winH = window.innerHeight;
+        // Scale to beautifully fit any display while holding true to 1200x720 aspect ratio
+        const scale = Math.min(winW / 1200, winH / 720);
         app.style.transform = `scale(${scale})`;
       }
       window.addEventListener("resize", resizeApp);
@@ -502,7 +511,7 @@
 
       // --- Fixed Canvas Logic Dimensions ---
       const LOGIC_W = 1200;
-      const LOGIC_H = 560;
+      const LOGIC_H = 540;
       const canvas = document.getElementById("gameCanvas");
       const ctx = canvas.getContext("2d");
 
@@ -516,8 +525,8 @@
         unitW: 52,
         waterSpeed: 350,
         pipeRadius: 16,
-        topRulerY: 70,
-        bottomRulerY: 490,
+        topRulerY: 60, // Adjusted for 540px wrapper height
+        bottomRulerY: 480, // Adjusted for 540px wrapper height
       };
       const offsetX = (LOGIC_W - CFG.units * CFG.unitW) / 2;
 
@@ -536,17 +545,15 @@
           let start, target, solutionBlocks, pathLen;
           let isValid = false;
 
-          // 1. Generate a valid path of at least 4 numbers
           while (!isValid) {
             start = Math.floor(Math.random() * 21);
-            pathLen = Math.floor(Math.random() * 3) + 4; // Length between 4 and 6 pipes
+            pathLen = Math.floor(Math.random() * 3) + 4;
             let current = start;
             solutionBlocks = [];
             let failed = false;
 
             for (let i = 0; i < pathLen; i++) {
               let validMoves = [];
-              // Prevent massive unplayable pipe lengths (keep to 2-9 range)
               for (let len = 2; len <= 9; len++) {
                 if (current + len <= 20) validMoves.push({ len, dir: 1 });
                 if (current - len >= 0) validMoves.push({ len, dir: -1 });
@@ -565,7 +572,7 @@
 
             target = current;
             if (!failed && target !== start) {
-              isValid = true; // Path safely reached a distinct target!
+              isValid = true;
             }
           }
 
@@ -575,27 +582,28 @@
           let val = pathLen;
 
           // 3. Apply constraints and add distractions
+          // Ensure the total number of pipes NEVER exceeds 7
+          let maxDistractionsAllowed = 7 - pathLen;
+          let distractionsToAdd = Math.min(
+            Math.floor(Math.random() * 2) + 1,
+            maxDistractionsAllowed,
+          );
+
           if (mode === 0) {
-            // Min Pipes
             val = Math.max(2, pathLen - 1);
-            // Add 1 or 2 distraction pipes
-            blocks.push(Math.floor(Math.random() * 8) + 2);
-            if (Math.random() > 0.5)
+            for (let i = 0; i < distractionsToAdd; i++) {
               blocks.push(Math.floor(Math.random() * 8) + 2);
+            }
           } else if (mode === 1) {
-            // Exact Pipes
             val = pathLen;
-            // Add 1 or 2 distraction pipes
-            blocks.push(Math.floor(Math.random() * 8) + 2);
-            if (Math.random() > 0.5)
+            for (let i = 0; i < distractionsToAdd; i++) {
               blocks.push(Math.floor(Math.random() * 8) + 2);
+            }
           } else if (mode === 2) {
-            // Max / ALL Pipes
             val = pathLen;
-            // Deliberately NO distractions here, they must use exactly the blocks provided!
+            // Mode 2 uses ALL pipes, no distractions added
           }
 
-          // Shuffle the tray blocks so the order isn't a dead giveaway
           blocks.sort(() => Math.random() - 0.5);
 
           generated.push({
@@ -604,22 +612,21 @@
             target: target,
             blocks: blocks,
             desc: descriptions[mode].replace("{val}", val),
-            maxRows: blocks.length + 1, // Ensures canvas always scales enough rows to drop all blocks
+            maxRows: blocks.length + 1,
             condition: { type: mode, val: val },
           });
         }
         return generated;
       }
 
-      // Generate exactly 5 levels dynamically!
       const LEVELS = generateDynamicLevels(5);
 
-      // --- State ---
+      // --- Variables ---
       let currentLvl = 0;
       let level = LEVELS[currentLvl];
       let placedPipes = [];
       let available = [];
-      let gameState = "start"; // Initialize safely
+      let gameState = "start";
       let stepH = 0;
 
       let isValveOpen = false;
@@ -629,17 +636,14 @@
       let maxFlowDist = 0;
       let pathSegments = [];
       let particles = [];
-      let confetti = []; // State for party popper effect
+      let confetti = [];
 
-      // Transition State
       let isTransitioning = false;
       let cameraY = 0;
 
-      // Tutorial State
       let tutorialPhase = 0;
       let tutorialTimer = 0;
 
-      // Drag System
       let mouseX = 0,
         mouseY = 0;
       let activeDragPipe = null;
@@ -660,7 +664,6 @@
           id: `p_${currentLvl}_${i}`,
           dir: 1,
         }));
-        // Don't overwrite state to "build" here if we are showing intro
         if (gameState !== "intro") gameState = "build";
 
         const totalDistance = CFG.bottomRulerY - CFG.topRulerY;
@@ -695,18 +698,14 @@
       function createPipeSVG(val) {
         const pr = 10;
         const stepH = 40;
-
         const px = 24;
         const targetX = px + 64;
-
         const width = targetX + 24;
         const height = 90;
-
         const dropY = 45;
-        const vertStartY = dropY - stepH / 2; // 25
-        const vertEndY = dropY + stepH / 2; // 65
+        const vertStartY = dropY - stepH / 2;
+        const vertEndY = dropY + stepH / 2;
 
-        // Strict boundary to prevent arcTo from backtracking
         const maxRadius = Math.max(0, stepH / 2 - 1);
         const radius = Math.min(
           pr * 1.5,
@@ -722,8 +721,6 @@
           <path d="${pathData}" fill="none" stroke="#94a3b8" stroke-width="${pr * 0.8}" stroke-linecap="butt" stroke-linejoin="round" />
           <rect x="${px - pr - 3}" y="${vertStartY}" width="${pr * 2 + 6}" height="6" rx="2" fill="#475569" />
           <rect x="${targetX - pr - 3}" y="${vertEndY - 6}" width="${pr * 2 + 6}" height="6" rx="2" fill="#475569" />
-          
-          <!-- Removed reverse button, placed value text cleanly below the pipe -->
           <text x="${(px + targetX) / 2}" y="${dropY + 26}" fill="white" font-size="20" font-weight="900" font-family="Nunito, sans-serif" text-anchor="middle">${val}</text>
         </svg>`;
       }
@@ -743,33 +740,39 @@
           available.forEach((b) => {
             const el = document.createElement("div");
             el.className = "pipe-block";
-            el.innerHTML = createPipeSVG(b.val); // Restored the SVG renderer!
-            el.draggable = true;
+            el.innerHTML = createPipeSVG(b.val);
 
-            el.addEventListener("dragstart", (e) => {
+            // Replaced HTML5 Drag & Drop with robust Pointer Events for mobile touch
+            el.addEventListener("pointerdown", (e) => {
               if (gameState !== "build") return;
-              const img = new Image();
-              img.src =
-                "data:image/gif;base64,R0lGODlhAQABAAD/ACwAAAAAAQABAAACADs=";
-              e.dataTransfer.setDragImage(img, 0, 0);
+              e.preventDefault(); // Stop screen panning
+              el.setPointerCapture(e.pointerId); // Lock finger to this element
               activeDragPipe = { ...b };
-              setTimeout(() => {
-                el.style.opacity = "0.2";
-              }, 0);
+              el.style.opacity = "0.2";
+              updateMouseSnap(e); // Initialize ghost position instantly
             });
 
-            el.addEventListener("dragend", () => {
-              if (activeDragPipe) {
-                activeDragPipe = null;
-                updateUI();
+            el.addEventListener("pointermove", (e) => {
+              if (activeDragPipe && activeDragPipe.id === b.id) {
+                updateMouseSnap(e);
               }
             });
+
+            const handleRelease = (e) => {
+              if (activeDragPipe && activeDragPipe.id === b.id) {
+                el.releasePointerCapture(e.pointerId);
+                dropActivePipe();
+              }
+            };
+
+            el.addEventListener("pointerup", handleRelease);
+            el.addEventListener("pointercancel", handleRelease);
+
             tray.appendChild(el);
           });
         }
       }
 
-      // --- Dynamic Flow Logic ---
       function buildFlowGraph() {
         let seq = [];
         let curCol = level.start;
@@ -888,15 +891,7 @@
         };
       }
 
-      canvas.addEventListener("dragover", (e) => {
-        e.preventDefault();
-        updateMouseSnap(e);
-      });
-      canvas.addEventListener("drop", (e) => {
-        e.preventDefault();
-        updateMouseSnap(e);
-        if (activeDragPipe) dropActivePipe();
-      });
+      // Removed HTML5 dragover & drop listeners to rely purely on universal pointer events
 
       canvas.addEventListener("pointerdown", (e) => {
         if (gameState !== "build" || isTransitioning) return;
@@ -942,6 +937,7 @@
             pos.y <= dropY + pr;
 
           if (inLeftVert || inRightVert || inHoriz) {
+            canvas.setPointerCapture(e.pointerId); // Lock finger to canvas during drag
             activeDragPipe = placedPipes.splice(i, 1)[0];
             updateMouseSnap(e);
             return;
@@ -977,8 +973,18 @@
         canvas.style.cursor = cursor;
       });
 
-      canvas.addEventListener("pointerup", () => {
-        if (activeDragPipe) dropActivePipe();
+      canvas.addEventListener("pointerup", (e) => {
+        if (activeDragPipe) {
+          canvas.releasePointerCapture(e.pointerId);
+          dropActivePipe();
+        }
+      });
+
+      canvas.addEventListener("pointercancel", (e) => {
+        if (activeDragPipe) {
+          canvas.releasePointerCapture(e.pointerId);
+          dropActivePipe();
+        }
       });
 
       function updateMouseSnap(e) {
@@ -1009,7 +1015,7 @@
       }
 
       function dropActivePipe() {
-        if (mouseY > LOGIC_H - 80) {
+        if (mouseY > LOGIC_H - 60) {
           if (!available.find((p) => p.id === activeDragPipe.id))
             available.push(activeDragPipe);
         } else {
@@ -1076,7 +1082,7 @@
       document.getElementById("btn-play-now").addEventListener("click", () => {
         document.getElementById("overlay-start").classList.add("hidden");
         initLevel();
-        showLevelIntro(); // Trigger the constraint popup!
+        showLevelIntro();
       });
 
       document
@@ -1086,7 +1092,6 @@
             .getElementById("overlay-level-intro")
             .classList.remove("active");
           gameState = "build";
-          // Launch tutorial glows for Level 1
           if (currentLvl === 0) {
             tutorialPhase = 1;
             tutorialTimer = 0;
@@ -1117,7 +1122,6 @@
           gameState = "transition";
           isTransitioning = true;
 
-          // Generate 5 completely NEW levels when the player hits 'Play Again'
           const newLevels = generateDynamicLevels(5);
           LEVELS.length = 0;
           LEVELS.push(...newLevels);
@@ -1133,7 +1137,7 @@
 
       document.getElementById("btn-reset").addEventListener("click", () => {
         initLevel();
-        gameState = "build"; // Bypass popup on standard manual reset
+        gameState = "build";
       });
 
       document
@@ -1204,7 +1208,6 @@
         let vertStartY = dropY - localStepH / 2;
         let vertEndY = dropY + localStepH / 2;
 
-        // Strict boundary to prevent arcTo from backtracking on tightly squeezed rows
         const maxRadius = Math.max(0, localStepH / 2 - 1);
         const radius = Math.min(
           pr * 1.5,
@@ -1246,22 +1249,17 @@
         ctx.font = `900 20px Nunito`;
         ctx.textAlign = "center";
         ctx.textBaseline = "middle";
-        ctx.fillText(val, midX, dropY + 36); // Positioned nicely below the pipe body
+        ctx.fillText(val, midX, dropY + 36);
 
-        // --- Bigger, Blue Reverse Button Graphic ---
+        // Responsive Reverse Button
         const btnW = 44;
         const btnH = 26;
-        const btnY = dropY - 42; // Floats clearly above the pipe without overlapping
+        const btnY = dropY - 42;
 
-        // Button Shadow
         ctx.fillStyle = "#1e3a8a";
         roundRect(midX - btnW / 2, btnY + 2, btnW, btnH, btnH / 2);
-
-        // Button Body
         ctx.fillStyle = "#3b82f6";
         roundRect(midX - btnW / 2, btnY, btnW, btnH, btnH / 2);
-
-        // Button Icon
         ctx.fillStyle = "white";
         ctx.font = `bold 18px sans-serif`;
         ctx.fillText("⇄", midX, btnY + btnH / 2 + 1);
@@ -1392,9 +1390,9 @@
           );
         }
 
-        // Draw Water safely wrapped
+        // Draw Water
         if (fDist > 0) {
-          ctx.save(); // Protect canvas state
+          ctx.save();
           ctx.beginPath();
           pSegments.forEach((seg) => {
             if (seg.type === "start") ctx.moveTo(seg.x, seg.y);
@@ -1521,13 +1519,12 @@
                 passed = pipesUsed === level.blocks.length;
 
               if (passed) {
-                // If it's the absolute last level, show the Grand Finale!
                 if (currentLvl === LEVELS.length - 1) {
                   gameState = "game_complete";
                   document
                     .getElementById("overlay-game-complete")
                     .classList.add("active");
-                  fireConfetti(layout.finalX, layout.finalY); // Burst from the target pool!
+                  fireConfetti(layout.finalX, layout.finalY);
                 } else {
                   gameState = "win";
                   document
@@ -1609,7 +1606,6 @@
           drawLevelContent(nextLvl, [], 0, [], [], 0);
         }
 
-        // Draw Confetti on top of everything
         confetti.forEach((c) => {
           ctx.save();
           ctx.translate(c.x, c.y);
